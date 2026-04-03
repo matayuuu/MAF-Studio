@@ -1,0 +1,52 @@
+{
+  "workflows": [
+    {
+      "id": "wf-demo",
+      "name": "Planner to Reviewer",
+      "description": "Starter workflow that chains a planning agent into a reviewer.",
+      "input_text": "Build a MAF workflow and summarize the output.",
+      "start_node_id": "node-planner",
+      "nodes": [
+        {
+          "id": "node-planner",
+          "title": "Planner",
+          "agent_id": "agent-planner",
+          "position": {
+            "x": 39.0,
+            "y": 167.0
+          }
+        },
+        {
+          "id": "node-reviewer",
+          "title": "Reviewer",
+          "agent_id": "agent-reviewer",
+          "position": {
+            "x": 339.75,
+            "y": 74.0
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "edge-demo",
+          "source": "node-planner",
+          "target": "node-reviewer",
+          "edge_type": "direct",
+          "label": "plan → review",
+          "condition": "",
+          "priority": 0
+        },
+        {
+          "id": "edge-87ca53d5",
+          "source": "node-reviewer",
+          "target": "node-planner",
+          "edge_type": "fan-in",
+          "label": "",
+          "condition": "",
+          "priority": 1
+        }
+      ],
+      "created_at": "2026-04-01T00:01:53.160968+09:00"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "id": "agent-4532d98c",
+  "name": "CustomerSupportAgent",
+  "description": "",
+  "instructions": "カスタマーサポートエージェントです。",
+  "model": {
+    "provider": "azure-openai",
+    "model": "gpt-5.4",
+    "temperature": 0.2,
+    "api_key_env": "OPENAI_API_KEY",
+    "base_url": null,
+    "api_version": null,
+    "azure_endpoint_env": "AZURE_OPENAI_ENDPOINT",
+    "project_endpoint_env": "AZURE_AI_PROJECT_ENDPOINT"
+  },
+  "mcp_tools": [],
+  "skill_ids": [],
+  "default_prompt": "",
+  "created_at": "2026-04-02T00:05:11.684850+00:00"
+}

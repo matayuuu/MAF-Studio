@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InsureCRM — 生命保険顧客管理</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon">◆</span>
+      <span class="logo-text">InsureCRM</span>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-view="dashboard">
+        <span class="nav-icon">⬛</span>ダッシュボード
+      </button>
+      <button class="nav-item" data-view="customers">
+        <span class="nav-icon">👤</span>顧客一覧
+      </button>
+      <button class="nav-item" data-view="products">
+        <span class="nav-icon">🛡</span>商品一覧
+      </button>
+      <button class="nav-item" data-view="activities">
+        <span class="nav-icon">📋</span>活動履歴
+      </button>
+    </nav>
+    <div class="sidebar-agent">
+      <div class="agent-avatar">鈴</div>
+      <div class="agent-info">
+        <div class="agent-name">鈴木 拓也</div>
+        <div class="agent-role">シニアエージェント</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-wrap">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <h1 class="page-title" id="pageTitle">ダッシュボード</h1>
+      </div>
+      <div class="topbar-right">
+        <div class="search-bar">
+          <input type="text" id="globalSearch" placeholder="顧客を検索…" autocomplete="off" />
+          <span class="search-icon">🔍</span>
+          <div class="search-dropdown" id="searchDropdown"></div>
+        </div>
+        <div class="topbar-date" id="todayDate"></div>
+      </div>
+    </header>
+
+    <!-- Views -->
+    <main class="content">
+
+      <!-- ── Dashboard ── -->
+      <section class="view active" id="view-dashboard">
+        <div class="kpi-grid" id="kpiGrid"></div>
+        <div class="charts-row">
+          <div class="card chart-card">
+            <div class="card-header">商品別契約件数</div>
+            <canvas id="productChart"></canvas>
+          </div>
+          <div class="card chart-card">
+            <div class="card-header">契約ステータス内訳</div>
+            <canvas id="contractStatusChart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">最近の活動</div>
+          <div id="recentActivities"></div>
+        </div>
+      </section>
+
+      <!-- ── Customers ── -->
+      <section class="view" id="view-customers">
+        <div class="toolbar">
+          <input class="toolbar-search" id="customerSearch" type="text" placeholder="氏名・カナ・メールで検索…" />
+        </div>
+        <div class="table-wrap card">
+          <table class="data-table" id="customerTable">
+            <thead>
+              <tr>
+                <th>顧客ID</th><th>氏名</th><th>年齢</th><th>都道府県</th>
+                <th>職業</th><th>年収</th><th>担当者</th><th>最終接触</th>
+              </tr>
+            </thead>
+            <tbody id="customerTbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Customer Detail ── -->
+      <section class="view" id="view-customer-detail">
+        <button class="back-btn" id="backBtn">← 顧客一覧に戻る</button>
+        <div id="customerDetailContent"></div>
+      </section>
+
+      <!-- ── Products ── -->
+      <section class="view" id="view-products">
+        <div class="product-grid" id="productGrid"></div>
+      </section>
+
+      <!-- ── Activities ── -->
+      <section class="view" id="view-activities">
+        <div class="table-wrap card">
+          <table class="data-table" id="activityTable">
+            <thead>
+              <tr>
+                <th>日付</th><th>顧客</th><th>種別</th><th>件名</th><th>担当者</th><th>結果</th><th>次回アクション</th>
+              </tr>
+            </thead>
+            <tbody id="activityTbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

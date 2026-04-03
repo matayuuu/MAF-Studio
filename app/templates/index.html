@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ title }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <!-- ========== Fixed sidebar nav ========== -->
+    <nav id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/><polyline points="2 15.5 12 8.5 22 15.5"/></svg>
+        </div>
+        <span class="brand-label">MAF Studio</span>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-section-label">Build</div>
+        <a class="nav-item active" data-page="agents" href="#agents">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Agents</span>
+        </a>
+        <a class="nav-item" data-page="skills" href="#skills">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          <span>Skills</span>
+        </a>
+        <a class="nav-item" data-page="workflows" href="#workflows" style="display:none">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <span>Workflows</span>
+        </a>
+        <a class="nav-item" data-page="handoffs" href="#handoffs">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/><path d="m15 5 4 4"/></svg>
+          <span>Handoffs</span>
+        </a>
+        <a class="nav-item" data-page="skillviz" href="#skillviz">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+          <span>Skill Viz</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-section-label">Observe</div>
+        <a class="nav-item" data-page="console" href="#console">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          <span>Console</span>
+        </a>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-status">
+          <span class="status-dot"></span>
+          <span id="sidebar-status-text">Connected</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ========== Main content area ========== -->
+    <div id="app">
+      <header id="page-header">
+        <div class="header-left">
+          <h1 id="page-title">Agents</h1>
+          <p id="page-subtitle" class="subtitle">Create and test Agent Framework agents with model, instructions, MCP tools, and file-based skills.</p>
+        </div>
+      </header>
+
+      <!-- ============== PAGE: Agents ============== -->
+      <section id="page-agents" class="page active">
+        <div class="agents-layout">
+          <!-- Left: agent list -->
+          <div class="agent-list-col">
+            <div class="panel">
+              <div class="panel-head">
+                <h2>Agents</h2>
+                <button id="new-agent-btn" class="btn btn-ghost btn-sm">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  New
+                </button>
+              </div>
+              <div id="agent-list" class="card-stack"></div>
+            </div>
+          </div>
+
+          <!-- Right: detail pane with two tabs -->
+          <div class="agent-detail-col">
+            <!-- Agent header bar -->
+            <div class="agent-header-bar">
+              <div class="agent-header-info">
+                <span class="agent-header-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </span>
+                <strong id="agent-header-name">New Agent</strong>
+                <span id="agent-header-tools" class="header-chip">0 tools</span>
+              </div>
+              <div class="agent-header-actions">
+                <button id="delete-agent-btn" class="btn btn-danger btn-sm" title="Delete this agent">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+                <button id="save-agent-btn" class="btn btn-primary btn-sm">Save Agent</button>
+                <span id="agent-status" class="status-badge">Ready</span>
+              </div>
+            </div>
+
+            <!-- Tab bar -->
+            <div class="agent-tabs">
+              <button class="agent-tab active" data-tab="configuration">Configuration</button>
+              <button class="agent-tab" data-tab="playground">Playground</button>
+            </div>
+
+            <!-- Tab: Configuration -->
+            <div id="tab-configuration" class="agent-tab-content active">
+              <div class="panel">
+                <div class="panel-body">
+                  <fieldset class="form-block">
+                    <legend class="form-legend">Identity</legend>
+                    <div class="field-row two-col">
+                      <div class="field"><label>Agent name</label><input id="agent-name" type="text" placeholder="Research Agent" /></div>
+                      <div class="field"><label>Description</label><input id="agent-description" type="text" placeholder="Role for this agent" /></div>
+                    </div>
+                  </fieldset>
+
+                  <fieldset class="form-block">
+                    <legend class="form-legend">Model</legend>
+                    <div class="field-row three-col">
+                      <div class="field"><label>Provider</label>
+                        <select id="provider">
+                          <option value="mock">Mock preview</option>
+                          <option value="openai">OpenAI Responses</option>
+                          <option value="azure-openai">Azure OpenAI</option>
+                          <option value="foundry">Azure AI Foundry</option>
+                        </select>
+                      </div>
+                      <div class="field"><label>Model / deployment</label>
+                        <div class="model-select-row">
+                          <select id="model-name">
+                            <option value="gpt-4.1-mini">gpt-4.1-mini (manual)</option>
+                          </select>
+                          <button type="button" id="btn-fetch-models" class="btn btn-icon" title="Fetch deployed models from Azure OpenAI">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13.65 2.35a8 8 0 1 0 .93 10.28l-1.48-1.06A6 6 0 1 1 12.6 3.4L10.5 5.5H15V1l-1.35 1.35z" fill="currentColor"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="field"><label>Secret env var</label><input id="api-key-env" type="text" value="OPENAI_API_KEY" /></div>
+                    </div>
+                    <div class="field-row two-col">
+                      <div class="field"><label>Base URL / endpoint</label><input id="base-url" type="text" placeholder="https://..." /></div>
+                      <div class="field"><label>API version</label><input id="api-version" type="text" placeholder="2024-10-21" /></div>
+                    </div>
+                  </fieldset>
+
+                  <fieldset class="form-block">
+                    <legend class="form-legend">Instructions</legend>
+                    <textarea id="instructions" rows="7" placeholder="System prompt / role instructions for this agent"></textarea>
+                  </fieldset>
+
+                  <fieldset class="form-block">
+                    <legend class="form-legend">Agent Skills</legend>
+                    <p class="form-hint">Uploaded file-based skills with subprocess script execution</p>
+                    <div id="skill-checkboxes" class="skill-checks"></div>
+                  </fieldset>
+
+                  <fieldset class="form-block">
+                    <legend class="form-legend">
+                      MCP Tools
+                      <button id="add-mcp-btn" class="btn btn-ghost btn-xs">+ Add</button>
+                    </legend>
+                    <div id="mcp-container" class="mcp-stack"></div>
+                  </fieldset>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab: Playground (DevUI-style chat + inspector) -->
+            <div id="tab-playground" class="agent-tab-content">
+              <div class="playground-layout">
+                <!-- Left: Chat -->
+                <div class="chat-panel">
+                  <div class="chat-header">
+                    <div class="chat-header-left">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                      <span>Chat with <strong id="chat-agent-name">Agent</strong></span>
+                    </div>
+                    <button id="new-thread-btn" class="btn btn-ghost btn-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      New Thread
+                    </button>
+                  </div>
+                  <div id="chat-agent-desc" class="chat-description">A helpful Microsoft Agent Framework assistant.</div>
+                  <div id="chat-messages" class="chat-messages">
+                    <!-- messages rendered dynamically -->
+                  </div>
+                  <div class="chat-input-bar">
+                    <input id="chat-input" type="text" placeholder="Type a message..." />
+                    <button id="chat-send-btn" class="btn btn-primary btn-sm chat-send">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Right: Inspector -->
+                <div class="inspector-panel">
+                  <div class="inspector-tabs">
+                    <button class="inspector-tab active" data-inspector="events">Events</button>
+                    <button class="inspector-tab" data-inspector="traces">Traces</button>
+                    <button class="inspector-tab" data-inspector="tools">Tools</button>
+                    <button id="inspector-toggle" class="inspector-toggle-btn" title="パネルを閉じる">&#9664;</button>
+                  </div>
+                  <div id="inspector-events" class="inspector-content active">
+                    <div class="inspector-subhead">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                      Events <span id="event-count" class="count-badge">0</span>
+                    </div>
+                    <div id="event-list" class="event-list">
+                      <div class="inspector-empty">Run the agent to see events here.</div>
+                    </div>
+                  </div>
+                  <div id="inspector-traces" class="inspector-content">
+                    <div class="inspector-subhead">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                      Traces
+                    </div>
+                    <div id="trace-list" class="event-list">
+                      <div class="inspector-empty">No traces yet.</div>
+                    </div>
+                  </div>
+                  <div id="inspector-tools" class="inspector-content">
+                    <div class="inspector-subhead">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                      Tools
+                    </div>
+                    <div id="tools-list" class="tools-grid"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============== PAGE: Skills ============== -->
+      <section id="page-skills" class="page">
+        <div class="skills-layout">
+          <div class="skills-main-col">
+            <div class="panel">
+              <div class="panel-head"><h2>Skill Library</h2></div>
+              <div id="skill-list" class="card-stack"></div>
+              <div class="empty-state" id="skills-empty"><p>No skills imported yet.</p></div>
+            </div>
+          </div>
+
+          <div class="skills-side-col">
+            <div class="panel">
+              <div class="panel-head"><h2>Upload Skill</h2></div>
+              <div class="panel-body">
+                <div class="field"><label>Skill name</label><input id="skill-name" type="text" value="uploaded-skill" /></div>
+                <div class="field">
+                  <label>Folder upload</label>
+                  <div class="file-zone">
+                    <input id="skill-folder" type="file" webkitdirectory directory multiple />
+                    <div class="file-zone-label">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                      <span>Choose folder</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="field">
+                  <label>File upload</label>
+                  <div class="file-zone">
+                    <input id="skill-files" type="file" multiple />
+                    <div class="file-zone-label">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+                      <span>Choose files</span>
+                    </div>
+                  </div>
+                </div>
+                <button id="upload-skill-btn" class="btn btn-primary btn-block">Import Skill</button>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><h2>Run Script</h2></div>
+              <div class="panel-body">
+                <div class="field"><label>Skill</label><select id="script-skill-select"></select></div>
+                <div class="field"><label>Script</label><select id="script-name-select"></select></div>
+                <div class="field"><label>Args (JSON)</label>
+                  <textarea id="script-args" rows="4">{
+  "value": 26.2,
+  "factor": 1.60934
+}</textarea>
+                </div>
+                <button id="run-script-btn" class="btn btn-accent btn-block">Run Locally</button>
+                <pre id="script-output" class="output-pre compact-output">Script output will appear here.</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============== PAGE: Workflows ============== -->
+      <section id="page-workflows" class="page" style="display:none">
+        <div class="wf-toolbar">
+          <div class="field-row four-col">
+            <div class="field"><label>Name</label><input id="workflow-name" type="text" value="New Workflow" /></div>
+            <div class="field"><label>Start node</label><select id="workflow-start"></select></div>
+            <div class="field"><label>Agent</label>
+              <div class="inline-row"><select id="node-agent-select"></select><button id="add-node-btn" class="btn btn-ghost btn-sm">+ Node</button></div>
+            </div>
+            <div class="field"><label>Description</label><input id="workflow-description" type="text" value="Compose agents into a deterministic workflow." /></div>
+          </div>
+        </div>
+
+        <div class="wf-body">
+          <div class="wf-canvas-wrap">
+            <div class="canvas-shell">
+              <svg id="edge-layer"></svg>
+              <div id="workflow-canvas" class="workflow-canvas"></div>
+            </div>
+          </div>
+
+          <div class="wf-edge-panel panel">
+            <div class="panel-head"><h2>Edge Builder</h2></div>
+            <div class="panel-body">
+              <div class="field"><label>Source</label><select id="edge-source"></select></div>
+              <div class="field"><label>Target</label><select id="edge-target"></select></div>
+              <div class="field"><label>Edge type</label>
+                <select id="edge-type">
+                  <option value="direct">direct</option>
+                  <option value="conditional">conditional</option>
+                  <option value="switch-case">switch-case</option>
+                  <option value="multi-selection">multi-selection</option>
+                  <option value="fan-in">fan-in</option>
+                </select>
+              </div>
+              <div class="field"><label>Label</label><input id="edge-label" type="text" placeholder="approve / default" /></div>
+              <div class="field"><label>Condition</label><input id="edge-condition" type="text" placeholder="contains:approve" /></div>
+              <button id="add-edge-btn" class="btn btn-primary btn-block">Add Edge</button>
+
+              <div class="edge-legend">
+                <h4>Edge Types</h4>
+                <div class="legend-row"><span class="ldot c-direct"></span>direct</div>
+                <div class="legend-row"><span class="ldot c-conditional"></span>conditional</div>
+                <div class="legend-row"><span class="ldot c-switch"></span>switch-case</div>
+                <div class="legend-row"><span class="ldot c-multi"></span>multi-selection</div>
+                <div class="legend-row"><span class="ldot c-fanin"></span>fan-in</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="wf-test-section">
+          <div class="field">
+            <label>Workflow test prompt</label>
+            <textarea id="workflow-prompt" rows="3">Plan the work, review it, then decide whether to approve or request revision.</textarea>
+          </div>
+          <div class="btn-row">
+            <button id="save-workflow-btn" class="btn btn-primary">Save Workflow</button>
+            <button id="test-workflow-btn" class="btn btn-accent">Test Workflow</button>
+            <span id="workflow-status" class="status-badge">Ready</span>
+          </div>
+          <div class="wf-results">
+            <div class="panel output-panel">
+              <div class="panel-head"><h2>Code Preview</h2></div>
+              <pre id="workflow-code" class="output-pre">Save or test the workflow to see the generated WorkflowBuilder code.</pre>
+            </div>
+            <div class="panel output-panel">
+              <div class="panel-head"><h2>Execution Trace</h2></div>
+              <pre id="workflow-output" class="output-pre">Add nodes and edges, then test the workflow.</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============== PAGE: Handoffs ============== -->
+      <section id="page-handoffs" class="page">
+        <div class="handoffs-layout">
+
+          <!-- Handoff list -->
+            <div class="panel handoff-list-panel">
+              <div class="panel-head">
+                <h2>Handoff Workflows</h2>
+                <button id="new-handoff-btn" class="btn btn-ghost btn-sm">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  New
+                </button>
+              </div>
+              <div id="handoff-list" class="card-stack"></div>
+            </div>
+
+            <!-- Configuration form -->
+            <div class="panel handoff-config-panel">
+              <div class="panel-head handoff-config-head">
+                <div class="handoff-config-title">
+                  <h2>Configuration</h2>
+                  <span id="handoff-status" class="status-badge">Ready</span>
+                </div>
+                <div class="handoff-config-actions">
+                  <button id="delete-handoff-btn" class="btn btn-danger btn-sm" title="Delete">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
+                  <button id="save-handoff-btn" class="btn btn-primary btn-sm">Save</button>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="field-row two-col">
+                  <div class="field"><label>Workflow name</label><input id="handoff-name" type="text" placeholder="Customer Support Handoff" /></div>
+                  <div class="field"><label>Description</label><input id="handoff-description" type="text" placeholder="Routes customer issues to specialists" /></div>
+                </div>
+
+                <!-- Participants: select + Add -->
+                <fieldset class="form-block">
+                  <legend class="form-legend">Participants</legend>
+                  <div class="ho-add-row">
+                    <select id="handoff-participant-select" class="ho-add-select">
+                      <option value="">— Select agent —</option>
+                    </select>
+                    <button id="add-participant-btn" class="btn btn-ghost btn-sm">Add</button>
+                  </div>
+                  <div id="handoff-participants-list" class="ho-chip-list"></div>
+                </fieldset>
+
+                <!-- Start Agent -->
+                <fieldset class="form-block">
+                  <legend class="form-legend">Start Agent</legend>
+                  <select id="handoff-start-agent">
+                    <option value="">— Select start agent —</option>
+                  </select>
+                </fieldset>
+
+                <!-- Routing Rules: source → target (checkboxes) + Add -->
+                <fieldset class="form-block">
+                  <legend class="form-legend">Routing Rules (Edges)</legend>
+                  <p class="form-hint">Define handoff edges. No rules = no edges in graph.</p>
+                  <div class="ho-rule-builder">
+                    <div class="ho-rule-builder-top">
+                      <select id="rule-src-select" class="ho-add-select">
+                        <option value="">Source agent</option>
+                      </select>
+                      <span class="rule-arrow">→</span>
+                      <button id="add-rule-btn" class="btn btn-ghost btn-sm">Add Edge</button>
+                    </div>
+                    <div class="ho-rule-builder-targets">
+                      <p class="form-hint" style="margin:0 0 4px">To (select one or more):</p>
+                      <div id="rule-tgt-checks" class="ho-tgt-checks"></div>
+                    </div>
+                  </div>
+                  <div id="handoff-rules-list" class="ho-chip-list ho-rules-list"></div>
+                </fieldset>
+
+                <!-- Options -->
+                <fieldset class="form-block">
+                  <legend class="form-legend">Options</legend>
+                  <div class="field-row two-col">
+                    <div class="field"><label>Termination keyword</label><input id="handoff-termination-keyword" type="text" value="goodbye" placeholder="goodbye" /></div>
+                    <div class="field field-inline-check">
+                      <label class="inline-check-label">
+                        <input id="handoff-autonomous" type="checkbox" />
+                        <span>Autonomous mode</span>
+                      </label>
+                    </div>
+                  </div>
+                </fieldset>
+              </div>
+            </div>
+
+          <!-- Handoff Graph — at the top of the right panel -->
+            <div class="panel handoff-viz-panel">
+              <div class="panel-head">
+                <h2>Handoff Graph</h2>
+                <div class="ho-graph-controls">
+                  <button id="ho-zoom-out-btn" class="btn btn-ghost btn-sm ho-ctrl-btn" title="Zoom out">−</button>
+                  <span id="ho-zoom-label" class="ho-zoom-label">100%</span>
+                  <button id="ho-zoom-in-btn" class="btn btn-ghost btn-sm ho-ctrl-btn" title="Zoom in">+</button>
+                  <button id="ho-zoom-reset-btn" class="btn btn-ghost btn-sm ho-ctrl-btn" title="Reset zoom">⟲</button>
+                  <button id="ho-layout-btn" class="btn btn-ghost btn-sm ho-ctrl-btn" title="Reset layout">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg>
+                    Layout
+                  </button>
+                </div>
+                <span class="form-hint ho-viz-hint">Drag nodes · scroll to zoom · drag background to pan</span>
+              </div>
+              <div class="handoff-viz-body">
+                <div class="ho-canvas-shell">
+                  <div id="ho-viewport" class="ho-viewport">
+                    <svg id="ho-edge-layer"></svg>
+                    <div id="ho-canvas" class="ho-canvas"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chat test panel -->
+            <div class="panel handoff-chat-panel">
+              <div class="handoff-chat-header">
+                <div class="handoff-chat-header-left">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  <span>Test Handoff</span>
+                </div>
+                <div class="handoff-chat-header-right">
+                  <div class="handoff-active-agent-badge" id="handoff-active-agent-badge">
+                    <span class="active-agent-dot"></span>
+                    <span id="handoff-active-agent-name">No active agent</span>
+                  </div>
+                  <button id="handoff-new-thread-btn" class="btn btn-ghost btn-sm">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    New Thread
+                  </button>
+                </div>
+              </div>
+
+              <!-- Participant strip -->
+              <div id="handoff-agent-strip" class="handoff-agent-strip"></div>
+
+              <!-- Messages + thinking process -->
+              <div id="handoff-chat-messages" class="handoff-chat-messages">
+                <div class="handoff-empty-chat">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                  <p>Save the handoff configuration, then start chatting to test agent routing.</p>
+                </div>
+              </div>
+
+              <div class="chat-input-bar">
+                <input id="handoff-chat-input" type="text" placeholder="Type a message to start the handoff test..." />
+                <button id="handoff-chat-send-btn" class="btn btn-primary btn-sm chat-send">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+              </div>
+            </div>
+        </div>
+      </section>
+
+      <!-- ============== PAGE: Skill Visualization ============== -->
+      <section id="page-skillviz" class="page">
+        <div class="sv-layout">
+
+          <!-- Top bar: handoff selector -->
+          <div class="sv-topbar">
+            <div class="sv-topbar-left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+              <span class="sv-topbar-title">Skill Visualization</span>
+              <select id="sv-handoff-select" class="sv-handoff-select">
+                <option value="">— Select Handoff —</option>
+              </select>
+              <button id="sv-load-handoff-btn" class="btn btn-primary btn-sm">Load</button>
+            </div>
+            <div class="sv-topbar-right">
+              <div id="sv-active-agent-badge" class="handoff-active-agent-badge">
+                <span class="active-agent-dot"></span>
+                <span id="sv-active-agent-name">No active agent</span>
+              </div>
+              <button id="sv-new-thread-btn" class="btn btn-ghost btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Thread
+              </button>
+            </div>
+          </div>
+
+          <!-- Main grid: 2 columns -->
+          <div class="sv-main-grid">
+
+            <!-- LEFT COLUMN: Agent Graph + Chat -->
+            <div class="sv-left-col">
+
+              <!-- Agent Graph (top) -->
+              <div class="sv-graph-cell panel">
+                <div class="panel-head">
+                  <h2>Agent Graph</h2>
+                  <div class="ho-graph-controls">
+                    <button id="sv-zoom-out" class="btn btn-ghost btn-sm ho-ctrl-btn" title="Zoom out">−</button>
+                    <span id="sv-zoom-label" class="ho-zoom-label">100%</span>
+                    <button id="sv-zoom-in" class="btn btn-ghost btn-sm ho-ctrl-btn" title="Zoom in">+</button>
+                    <button id="sv-zoom-reset" class="btn btn-ghost btn-sm ho-ctrl-btn" title="Reset">⟲</button>
+                  </div>
+                </div>
+                <div class="sv-graph-body">
+                  <div class="ho-canvas-shell" id="sv-canvas-shell">
+                    <div id="sv-viewport" class="ho-viewport">
+                      <svg id="sv-edge-layer"></svg>
+                      <div id="sv-canvas" class="ho-canvas"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chat Interaction (bottom) -->
+              <div class="sv-chat-cell panel">
+                <div class="panel-head">
+                  <h2>Chat Interaction</h2>
+                </div>
+                <div id="sv-chat-messages" class="sv-chat-messages">
+                  <div class="handoff-empty-chat">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                    <p>Select a handoff and start chatting to visualize Agent Skills in action.</p>
+                  </div>
+                </div>
+                <div class="chat-input-bar sv-chat-input-bar">
+                  <input id="sv-chat-input" type="text" placeholder="Type a message..." />
+                  <button id="sv-chat-send-btn" class="btn btn-primary btn-sm chat-send">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  </button>
+                </div>
+              </div>
+
+            </div><!-- /sv-left-col -->
+
+            <!-- RIGHT COLUMN: Customer Information + Skill Context Management -->
+            <div class="sv-right-col">
+
+              <!-- Customer Information (top, placeholder) -->
+              <div class="sv-customer-cell panel">
+                <div class="panel-head">
+                  <h2>Customer Information</h2>
+                </div>
+                <div class="sv-customer-placeholder">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <p>CRM data will appear here (coming soon).</p>
+                </div>
+              </div>
+
+              <!-- Skill Context Management (bottom) -->
+              <div class="sv-context-cell panel">
+                <div class="panel-head sv-context-head">
+                  <h2>Skill Context Management</h2>
+                  <span id="sv-context-agent-label" class="sv-context-agent-label">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                    No agent
+                  </span>
+                </div>
+                <div class="sv-context-inner-grid">
+                  <!-- Instructions column -->
+                  <div class="sv-context-col">
+                    <div class="sv-context-col-head">Instructions</div>
+                    <div id="sv-context-instructions" class="sv-context-col-body">
+                      <div class="sv-prompt-placeholder">Load a handoff to view instructions.</div>
+                    </div>
+                  </div>
+                  <!-- Session column -->
+                  <div class="sv-context-col">
+                    <div class="sv-context-col-head">Session</div>
+                    <div class="sv-context-col-body">
+                      <div id="sv-session-entries" class="sv-session-entries">
+                        <div class="sv-skills-empty">load_skill が呼び出されるとここに追加されます。</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div><!-- /sv-right-col -->
+
+          </div><!-- /sv-main-grid -->
+        </div><!-- /sv-layout -->
+      </section>
+
+      <!-- ============== PAGE: Console ============== -->
+      <section id="page-console" class="page">
+        <div class="console-layout">
+          <div class="console-main panel">
+            <div class="panel-head">
+              <h2>Activity Log</h2>
+              <button id="clear-console-btn" class="btn btn-ghost btn-sm">Clear</button>
+            </div>
+            <pre id="activity-console" class="console-pre">Studio initialized.</pre>
+          </div>
+          <div class="console-side">
+            <div class="panel">
+              <div class="panel-head"><h2>Tips</h2></div>
+              <div id="tips" class="tips-list"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+.pytest_cache/
+.vscode/*.log
+data/uploads/
+dbg_server.log
+stderr_test.txt
+test_outputs/

@@ -1,0 +1,22 @@
+{
+  "id": "test1",
+  "name": "OnboardingAgent",
+  "description": "",
+  "instructions": "新入社員のオンボーディングに特化したエージェントです。",
+  "model": {
+    "provider": "azure-openai",
+    "model": "gpt-5.4-mini",
+    "temperature": 0.2,
+    "api_key_env": "AZURE_OPENAI_API_KEY",
+    "base_url": null,
+    "api_version": null,
+    "azure_endpoint_env": "AZURE_OPENAI_ENDPOINT",
+    "project_endpoint_env": "AZURE_AI_PROJECT_ENDPOINT"
+  },
+  "mcp_tools": [],
+  "skill_ids": [
+    "onboarding-guide"
+  ],
+  "default_prompt": "",
+  "created_at": "2026-04-01T12:02:05.338670+00:00"
+}

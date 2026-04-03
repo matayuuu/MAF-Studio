@@ -1,0 +1,26 @@
+{
+  "id": "agent-life-insurance",
+  "name": "生命保険エージェント",
+  "description": "生命保険の専門エージェント。ライフステージに合ったプランの提案・見積作成・新規契約・解約相談を担当する。",
+  "instructions": "あなたはContoso保険の生命保険専門エージェントです。\n引き継ぎ情報に customer_id が含まれている場合は、スキルでプロフィールを取得して契約情報を確認してください（顧客に再確認しない）。\n解約希望の場合は、スキルで代替プランを確認してから解約手続きへ進む。",
+  "model": {
+    "provider": "azure-openai",
+    "model": "gpt-5.4-mini",
+    "temperature": 0.2,
+    "api_key_env": "OPENAI_API_KEY",
+    "base_url": null,
+    "api_version": null,
+    "azure_endpoint_env": "AZURE_OPENAI_ENDPOINT",
+    "project_endpoint_env": "AZURE_AI_PROJECT_ENDPOINT"
+  },
+  "mcp_tools": [],
+  "skill_ids": [
+    "customer_profile_summary",
+    "life_insurance_contract_cancel",
+    "life_insurance_contract_create",
+    "life_insurance_quote",
+    "life_insurance_recommendation"
+  ],
+  "default_prompt": "",
+  "created_at": "2026-04-02T00:30:06.513264+00:00"
+}

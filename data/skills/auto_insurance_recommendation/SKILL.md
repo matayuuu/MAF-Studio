@@ -1,0 +1,29 @@
+---
+name: auto-insurance-recommendation
+description: Recommend auto insurance plans based on customer age, income, and profile.
+---
+
+# Skill: auto_insurance_recommendation
+
+## 目的
+顧客情報（年齢・年収・家族構成・ニーズ）をもとに、最適な自動車保険プランを提案する。
+
+## エージェントが使う判断ルール
+- `scripts/recommend.py` を呼び出し候補プランを取得する
+- RECOMMENDATION_RULES.md の年齢・年収基準に従ってプランを絞り込む
+- 既に自動車保険契約がある場合は重複加入を避け「見直しプラン」として提案する
+- 提案時は月額保険料・保障内容・特徴を明確に説明する
+- 最大3プランを比較形式で提示する
+
+## 業務上の暗黙知
+- 車購入直後の顧客は納車日に合わせた開始日を設定する
+- 「とりあえず安く」という顧客にはエコノミーを起点に会話する
+- 家族が増えた場合は搭乗者傷害特約の重要性を強調する
+
+## 使用するスクリプト
+- `scripts/recommend.py` — 条件に合うプラン一覧の取得
+
+## 使用するデータ
+- `demo_app/data/products.csv`
+- `demo_app/data/contracts.csv`
+- `references/RECOMMENDATION_RULES.md`
