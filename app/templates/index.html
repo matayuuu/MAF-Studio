@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260403k" />
   </head>
   <body>
     <!-- ========== Fixed sidebar nav ========== -->
@@ -565,7 +565,7 @@
             <div class="sv-left-col">
 
               <!-- Agent Graph (top) -->
-              <div class="sv-graph-cell panel">
+              <div class="sv-graph-cell panel" data-sv-panel="graph">
                 <div class="panel-head">
                   <h2>Agent Graph</h2>
                   <div class="ho-graph-controls">
@@ -573,6 +573,7 @@
                     <span id="sv-zoom-label" class="ho-zoom-label">100%</span>
                     <button id="sv-zoom-in" class="btn btn-ghost btn-sm ho-ctrl-btn" title="Zoom in">+</button>
                     <button id="sv-zoom-reset" class="btn btn-ghost btn-sm ho-ctrl-btn" title="Reset">⟲</button>
+                    <button class="btn btn-ghost btn-sm ho-ctrl-btn sv-maximize-btn" title="Maximize"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
                   </div>
                 </div>
                 <div class="sv-graph-body">
@@ -585,10 +586,67 @@
                 </div>
               </div>
 
+              <!-- Agent Skills (bottom) -->
+              <div class="sv-context-cell panel" data-sv-panel="context">
+                <div class="panel-head sv-context-head">
+                  <h2>Agent Skills</h2>
+                  <span id="sv-context-agent-label" class="sv-context-agent-label">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                    No agent
+                  </span>
+                  <button class="btn btn-ghost btn-sm sv-maximize-btn" title="Maximize"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
+                </div>
+                <div class="sv-context-inner-grid">
+                  <!-- Instructions column -->
+                  <div class="sv-context-col">
+                    <div class="sv-context-col-head">Instructions</div>
+                    <div id="sv-context-instructions" class="sv-context-col-body">
+                      <div class="sv-prompt-placeholder">Load a handoff to view instructions.</div>
+                    </div>
+                  </div>
+                  <!-- Load Skills column -->
+                  <div class="sv-context-col">
+                    <div class="sv-context-col-head">Load Skills</div>
+                    <div class="sv-context-col-body">
+                      <div id="sv-session-entries" class="sv-session-entries">
+                        <div class="sv-skills-empty">load_skill が呼び出されるとここに追加されます。</div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Read Skill Resources & Run Skill Scripts column -->
+                  <div class="sv-context-col">
+                    <div class="sv-context-col-head">Read Resources & Run Scripts</div>
+                    <div class="sv-context-col-body sv-tool-exec-body">
+                      <div id="sv-tool-exec-entries" class="sv-tool-exec-entries">
+                        <div class="sv-skills-empty">read_skill_resource / run_skill_script が呼び出されるとここに追加されます。</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div><!-- /sv-left-col -->
+
+            <!-- RIGHT COLUMN: Customer Information + Chat Interaction -->
+            <div class="sv-right-col">
+
+              <!-- Customer Information (top, placeholder) -->
+              <div class="sv-customer-cell panel" data-sv-panel="customer">
+                <div class="panel-head">
+                  <h2>Customer Information</h2>
+                  <button class="btn btn-ghost btn-sm sv-maximize-btn" title="Maximize"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
+                </div>
+                <div class="sv-customer-placeholder">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <p>CRM data will appear here (coming soon).</p>
+                </div>
+              </div>
+
               <!-- Chat Interaction (bottom) -->
-              <div class="sv-chat-cell panel">
+              <div class="sv-chat-cell panel" data-sv-panel="chat">
                 <div class="panel-head">
                   <h2>Chat Interaction</h2>
+                  <button class="btn btn-ghost btn-sm sv-maximize-btn" title="Maximize"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
                 </div>
                 <div id="sv-chat-messages" class="sv-chat-messages">
                   <div class="handoff-empty-chat">
@@ -601,51 +659,6 @@
                   <button id="sv-chat-send-btn" class="btn btn-primary btn-sm chat-send">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                   </button>
-                </div>
-              </div>
-
-            </div><!-- /sv-left-col -->
-
-            <!-- RIGHT COLUMN: Customer Information + Skill Context Management -->
-            <div class="sv-right-col">
-
-              <!-- Customer Information (top, placeholder) -->
-              <div class="sv-customer-cell panel">
-                <div class="panel-head">
-                  <h2>Customer Information</h2>
-                </div>
-                <div class="sv-customer-placeholder">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                  <p>CRM data will appear here (coming soon).</p>
-                </div>
-              </div>
-
-              <!-- Skill Context Management (bottom) -->
-              <div class="sv-context-cell panel">
-                <div class="panel-head sv-context-head">
-                  <h2>Skill Context Management</h2>
-                  <span id="sv-context-agent-label" class="sv-context-agent-label">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-                    No agent
-                  </span>
-                </div>
-                <div class="sv-context-inner-grid">
-                  <!-- Instructions column -->
-                  <div class="sv-context-col">
-                    <div class="sv-context-col-head">Instructions</div>
-                    <div id="sv-context-instructions" class="sv-context-col-body">
-                      <div class="sv-prompt-placeholder">Load a handoff to view instructions.</div>
-                    </div>
-                  </div>
-                  <!-- Session column -->
-                  <div class="sv-context-col">
-                    <div class="sv-context-col-head">Session</div>
-                    <div class="sv-context-col-body">
-                      <div id="sv-session-entries" class="sv-session-entries">
-                        <div class="sv-skills-empty">load_skill が呼び出されるとここに追加されます。</div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
 
@@ -675,6 +688,6 @@
       </section>
     </div>
 
-    <script src="/static/app.js" defer></script>
+    <script src="/static/app.js?v=20260403k" defer></script>
   </body>
 </html>

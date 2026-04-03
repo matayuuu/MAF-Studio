@@ -1920,6 +1920,9 @@ const sv = {
   panY:             0,
   flashEdgeKey:     null,
   skillPreviewCache: {},    // agentId → { base_instructions, advertise_block, skills }
+  toolExecEvents:   [],     // Tool Execution column entries
+  sessionMessages:  [],     // Sessions column: reconstructed _cache per agent
+  _callQueue:       [],     // FIFO queue of function call names for result pairing
 };
 
 /* ── Handoff selector ────────────────────────────────────── */
@@ -2020,6 +2023,8 @@ async function sendSvMessage() {
   svAddChatMsg("user", message);
   input.value = "";
 
+  sv._callQueue = [];
+
   sv.chatMessages.push({ role: "agent", text: "", agentName: null, time: new Date().toLocaleTimeString(), events: [], segments: [] });
   const msgIdx = sv.chatMessages.length - 1;
   renderSvChatMessages();
@@ -2091,6 +2096,36 @@ function handleSvSSE(type, data, msgIdx) {
     const evType = data.type || "";
     const title  = data.title || "";
 
+    // Read Resources & Run Scripts column — only read_skill_resource and run_skill_script
+    if (evType === "function_call.complete" || evType === "function_result.complete") {
+      const t = title.toLowerCase();
+      if (t.includes("run_skill_script") || t.includes("read_skill_resource")) {
+        addSvToolExecEvent(data);
+      }
+    }
+
+    // ── Load Skills column: track load_skill calls/results only ──
+    if (evType === "function_call.complete") {
+      const fnMatch = title.match(/function_call\(([^)]+)\)/);
+      const fnName  = fnMatch ? fnMatch[1] : title.replace(/calling\s+/i, "").trim();
+      sv._callQueue.push(fnName);
+      if (fnName === "load_skill") {
+        let skillName = null;
+        try { skillName = JSON.parse(data.detail || "{}").skill_name; } catch {}
+        if (!skillName) skillName = extractSvSkillName(data);
+        const ts = new Date().toLocaleTimeString();
+        sv.sessionMessages.push({ type: "skill_call", funcName: fnName, skillName: skillName || fnName, args: data.detail || "", ts });
+        renderSvSessionMessages();
+      }
+    } else if (evType === "function_result.complete") {
+      const calledName = sv._callQueue.shift() || "";
+      if (calledName === "load_skill") {
+        const ts = new Date().toLocaleTimeString();
+        sv.sessionMessages.push({ type: "skill_result", funcName: "load_skill", content: (data.detail || "").slice(0, 400), ts });
+        renderSvSessionMessages();
+      }
+    }
+
     if (evType === "skill_load" || (evType === "function_call.complete" && title.includes("load_skill"))) {
       const skillName = extractSvSkillName(data);
       addSvTimelineEvent({ type: "skill_load", title: title || `load_skill: ${skillName}`, detail: data.detail });
@@ -2110,6 +2145,13 @@ function handleSvSSE(type, data, msgIdx) {
       addSvTimelineEvent({ type: "resource_load", title, detail: data.detail });
     } else if (evType === "handoff_transition") {
       addSvTimelineEvent({ type: "handoff", title, detail: "" });
+      // Reset Load Skills and Read Resources & Run Scripts on handoff
+      sv.sessionMessages = [];
+      sv._callQueue = [];
+      renderSvSessionMessages();
+      const te = $("#sv-tool-exec-entries");
+      if (te) te.innerHTML = '<div class="sv-skills-empty">read_skill_resource / run_skill_script が呼び出されるとここに追加されます。</div>';
+      sv.toolExecEvents = [];
     } else if (evType === "response_complete") {
       addSvTimelineEvent({ type: "response_complete", title: "Response complete", detail: "" });
     }
@@ -2195,10 +2237,10 @@ function renderSvSystemPrompt() {
       <pre class="sv-prompt-pre">${esc(base)}</pre>
     </div>`;
     if (advertise) {
-      instrHtml += `<div class="sv-prompt-section sv-prompt-advertise">
-        <div class="sv-prompt-section-label sv-label-added">+ Skills Advertised</div>
+      instrHtml += `<details class="sv-prompt-section sv-prompt-advertise">
+        <summary class="sv-prompt-section-label sv-label-added">+ Skills Advertised</summary>
         <pre class="sv-prompt-pre">${esc(advertise)}</pre>
-      </div>`;
+      </details>`;
     }
   } else {
     instrHtml = `<div class="sv-prompt-placeholder">Load a handoff to view the system prompt augmented by Agent Skills.</div>`;
@@ -2206,25 +2248,54 @@ function renderSvSystemPrompt() {
   instrEl.innerHTML = instrHtml;
   instrEl.scrollTop = instrEl.scrollHeight;
 
-  // Session tab: loaded skill content entries
-  const sessionEntries = $("#sv-session-entries");
-  if (sessionEntries) {
-    if (loadedSkills.length === 0) {
-      sessionEntries.innerHTML = '<div class="sv-skills-empty">load_skill が呼び出されるとここに追加されます。</div>';
-    } else {
-      sessionEntries.innerHTML = loadedSkills.map((s) =>
-        `<div class="sv-prompt-section sv-prompt-skill-loaded" data-skill="${esc(s.id)}">
-          <div class="sv-prompt-section-label sv-label-loaded">
-            + load_skill: ${esc(s.name)}
-            <span class="sv-time-tag">${esc(s.addedAt)}</span>
-          </div>
-          <pre class="sv-prompt-pre sv-skill-content">${esc(s.content || "")}</pre>
-        </div>`
-      ).join("");
-      const sessionEl = sessionEntries.closest(".sv-context-col-body");
-      if (sessionEl) sessionEl.scrollTop = sessionEl.scrollHeight;
-    }
+  // Session tab: delegate to dedicated renderer
+  renderSvSessionMessages();
+}
+
+/* ── Session message renderer ────────────────────────────── */
+function renderSvSessionMessages() {
+  const el = $("#sv-session-entries");
+  if (!el) return;
+  if (!sv.sessionMessages.length) {
+    el.innerHTML = '<div class="sv-sess-empty">load_skill が呼び出されるとここに追加されます。</div>';
+    return;
   }
+  el.innerHTML = sv.sessionMessages.map((m) => {
+    switch (m.type) {
+      case "skill_call": {
+        let skillName = m.skillName || m.funcName;
+        let argsPreview = "";
+        try {
+          const a = JSON.parse(m.args || "{}");
+          argsPreview = Object.entries(a).map(([k, v]) => `${k}: ${v}`).join(", ");
+        } catch { argsPreview = ""; }
+        return `<div class="sv-sess-row sv-sess-call sv-sess-skill-call">
+          <div class="sv-sess-call-head">
+            <span class="sv-sess-badge sv-sess-badge-skill">📦 load_skill</span>
+            <span class="sv-sess-skill-name">${esc(skillName)}</span>
+          </div>
+          ${argsPreview ? `<div class="sv-sess-call-args">${esc(argsPreview)}</div>` : ""}
+          <span class="sv-sess-ts">${esc(m.ts)}</span>
+        </div>`;
+      }
+
+      case "skill_result": {
+        const content = m.content || "";
+        const snippet = content.slice(0, 300);
+        return `<div class="sv-sess-row sv-sess-result sv-sess-skill-result">
+          <details class="sv-sess-result-details">
+            <summary class="sv-sess-result-summary">↳ 結果を表示</summary>
+            <pre class="sv-sess-result-pre">${esc(snippet)}${content.length > 300 ? "\n…" : ""}</pre>
+          </details>
+        </div>`;
+      }
+
+      default:
+        return "";
+    }
+  }).join("");
+  const wrap = el.closest(".sv-context-col-body");
+  if (wrap) wrap.scrollTop = wrap.scrollHeight;
 }
 
 /* ── Skills status panel ─────────────────────────────────── */
@@ -2290,10 +2361,80 @@ function renderSvTimelineEntry(event) {
   container.scrollTop = container.scrollHeight;
 }
 
+/* ── Tool Execution panel ────────────────────────────────── */
+function addSvToolExecEvent(data) {
+  const ts = new Date().toLocaleTimeString();
+  const entry = { ...data, ts };
+  sv.toolExecEvents.push(entry);
+  renderSvToolExecEntry(entry);
+}
+
+function renderSvToolExecEntry(ev) {
+  const container = $("#sv-tool-exec-entries");
+  if (!container) return;
+  const empty = container.querySelector(".sv-skills-empty");
+  if (empty) empty.remove();
+
+  const evType = ev.type || "";
+  const title  = ev.title || "";
+  const isCall   = evType === "function_call.complete";
+  const isResult = evType === "function_result.complete";
+
+  const isSkillLoad = title.includes("load_skill");
+  const isSkillRun  = title.includes("run_skill_script");
+  const isSkillRes  = title.includes("read_skill_resource");
+  const isSkillRelated = isSkillLoad || isSkillRun || isSkillRes;
+
+  let badgeText = "";
+  let badgeCls  = "";
+  if (isSkillLoad)     { badgeText = "load_skill"; badgeCls = "sv-tool-badge-load"; }
+  else if (isSkillRun) { badgeText = "run_script";  badgeCls = "sv-tool-badge-run";  }
+  else if (isSkillRes) { badgeText = "resource";    badgeCls = "sv-tool-badge-res";  }
+  else if (isResult)   { badgeText = "result";      badgeCls = "sv-tool-badge-result"; }
+
+  let detailHtml = "";
+  if (ev.detail) {
+    let detailText = ev.detail;
+    if (isCall) {
+      try { const p = JSON.parse(ev.detail); detailText = JSON.stringify(p, null, 2); } catch {}
+    }
+    const snippet = detailText.slice(0, 300);
+    const summaryLabel = isResult ? "↳ 出力を表示" : "引数を表示";
+    detailHtml = `<details class="sv-tool-exec-details">
+      <summary class="sv-tool-exec-summary">${summaryLabel}</summary>
+      <pre class="sv-tool-exec-detail">${esc(snippet)}${detailText.length > 300 ? "\n…" : ""}</pre>
+    </details>`;
+  }
+
+  const icon = isResult ? "✓" : "⚙";
+  const cls = `sv-tool-exec-entry${isSkillRelated ? " sv-tool-skill" : ""}${isResult ? " sv-tool-result" : " sv-tool-call"}`;
+
+  const entryEl = document.createElement("div");
+  entryEl.className = cls;
+  entryEl.innerHTML = `
+    <div class="sv-tool-exec-head">
+      <span class="sv-tool-exec-icon">${icon}</span>
+      <span class="sv-tool-exec-name">${esc(title)}</span>
+      ${badgeText ? `<span class="sv-tool-exec-badge ${esc(badgeCls)}">${esc(badgeText)}</span>` : ""}
+      <span class="sv-time-tag">${esc(ev.ts)}</span>
+    </div>
+    ${detailHtml}`;
+  container.appendChild(entryEl);
+  container.scrollTop = container.scrollHeight;
+}
+
 function clearSvTimeline() {
   const c = $("#sv-timeline");
   if (c) c.innerHTML = '<div class="sv-timeline-empty">Start a conversation to see skill events here.</div>';
   sv.timelineEvents = [];
+  // also reset Tool Execution panel
+  const te = $("#sv-tool-exec-entries");
+  if (te) te.innerHTML = '<div class="sv-skills-empty">read_skill_resource / run_skill_script が呼び出されるとここに追加されます。</div>';
+  sv.toolExecEvents = [];
+  // also reset Sessions panel
+  sv.sessionMessages = [];
+  sv._callQueue = [];
+  renderSvSessionMessages();
 }
 
 /* ── Active agent badge ──────────────────────────────────── */
@@ -2529,6 +2670,109 @@ function _svUpdateViewport() {
   if (lbl) lbl.textContent = `${Math.round(sv.zoom * 100)}%`;
 }
 
+/* ── Panel maximize ──────────────────────────────────────── */
+function initSvPanelMaximize() {
+  let maximizedPanel = null;
+
+  function getBackdrop(panel) {
+    const layout = panel.closest(".sv-layout");
+    if (!layout) return null;
+    let bd = layout.querySelector(".sv-panel-backdrop");
+    if (!bd) {
+      bd = document.createElement("div");
+      bd.className = "sv-panel-backdrop";
+      layout.appendChild(bd);
+    }
+    return bd;
+  }
+
+  function maximize(panel) {
+    if (maximizedPanel) restoreImmediate();
+    maximizedPanel = panel;
+    const grid = panel.closest(".sv-main-grid");
+    const backdrop = getBackdrop(panel);
+    const btn = panel.querySelector(".sv-maximize-btn");
+    if (btn) {
+      btn.classList.add("is-maximized");
+      btn.title = "Restore";
+      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/></svg>';
+    }
+    panel.classList.add("sv-panel-maximized");
+    if (grid) grid.classList.add("has-maximized");
+    // Double rAF: let browser commit position, then trigger spring transition
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      panel.classList.add("sv-panel-expanded");
+      if (backdrop) backdrop.classList.add("sv-backdrop-visible");
+      // Redraw graph edges after spring settles (~450ms)
+      if (panel.dataset.svPanel === "graph") {
+        setTimeout(() => {
+          _svUpdateViewport();
+          const h = (studio.state.handoffs || []).find((x) => x.id === sv.handoffId);
+          if (h) { try { _svDrawEdges($("#sv-edge-layer"), h); } catch {} }
+        }, 460);
+      }
+    }));
+  }
+
+  function restore() {
+    if (!maximizedPanel) return;
+    const panel = maximizedPanel;
+    maximizedPanel = null;
+    const btn = panel.querySelector(".sv-maximize-btn");
+    if (btn) {
+      btn.classList.remove("is-maximized");
+      btn.title = "Maximize";
+      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
+    }
+    const grid = panel.closest(".sv-main-grid");
+    const backdrop = getBackdrop(panel);
+    // Trigger collapse transition
+    panel.classList.remove("sv-panel-expanded");
+    panel.classList.add("sv-panel-collapsing");
+    if (backdrop) backdrop.classList.remove("sv-backdrop-visible");
+    // Clean up after collapse animation
+    panel.addEventListener("transitionend", () => {
+      panel.classList.remove("sv-panel-maximized", "sv-panel-collapsing");
+      if (grid) grid.classList.remove("has-maximized");
+      if (panel.dataset.svPanel === "graph") {
+        requestAnimationFrame(() => {
+          _svUpdateViewport();
+          const h = (studio.state.handoffs || []).find((x) => x.id === sv.handoffId);
+          if (h) { try { _svDrawEdges($("#sv-edge-layer"), h); } catch {} }
+        });
+      }
+    }, { once: true });
+  }
+
+  // Skip animation when switching directly between maximized panels
+  function restoreImmediate() {
+    if (!maximizedPanel) return;
+    const panel = maximizedPanel;
+    maximizedPanel = null;
+    panel.classList.remove("sv-panel-maximized", "sv-panel-expanded", "sv-panel-collapsing");
+    const grid = panel.closest(".sv-main-grid");
+    if (grid) grid.classList.remove("has-maximized");
+    const backdrop = getBackdrop(panel);
+    if (backdrop) backdrop.classList.remove("sv-backdrop-visible");
+  }
+
+  // Bind buttons
+  $$("#page-skillviz .sv-maximize-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const panel = btn.closest("[data-sv-panel]");
+      if (!panel) return;
+      if (maximizedPanel === panel) restore();
+      else maximize(panel);
+    });
+  });
+
+  // Esc to restore
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && maximizedPanel) restore();
+  });
+}
+
 /* ── Init ────────────────────────────────────────────────── */
 function initSkillViz() {
   // Context tab switching
@@ -2570,6 +2814,9 @@ function initSkillViz() {
 
   // Clear timeline
   $("#sv-clear-timeline-btn")?.addEventListener("click", clearSvTimeline);
+
+  // Panel maximize/restore
+  initSvPanelMaximize();
 
   populateSvHandoffSelect();
   // Auto-load first handoff when navigating to the page
