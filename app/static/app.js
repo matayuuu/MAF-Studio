@@ -656,6 +656,31 @@ function drawEdges(svg, nodeMap) {
 }
 
 /* ==============================================================
+   TOAST NOTIFICATION
+   ============================================================== */
+let _toastTimer = null;
+function showToast(message, type = "success") {
+  const el = $("#toast");
+  if (!el) return;
+  el.textContent = message;
+  el.className = `toast toast--${type} toast--show`;
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { el.classList.remove("toast--show"); }, 2800);
+}
+
+/* ==============================================================
+   HANDOFF DIRTY STATE
+   ============================================================== */
+function markHandoffDirty() {
+  const badge = $("#handoff-dirty-badge");
+  if (badge) badge.style.display = "";
+}
+function clearHandoffDirty() {
+  const badge = $("#handoff-dirty-badge");
+  if (badge) badge.style.display = "none";
+}
+
+/* ==============================================================
    STATE MANAGEMENT
    ============================================================== */
 function populateState(state) {
@@ -1474,27 +1499,31 @@ function createBlankHandoff() {
 
 /* ── Populate handoff list sidebar ─────────────────────── */
 function populateHandoffList() {
-  const c = $("#handoff-list");
-  c.innerHTML = "";
-  (studio.state.handoffs || []).forEach((h) => {
-    const card = document.createElement("div");
-    card.className = `agent-card${h.id === studio.currentHandoffId ? " selected" : ""}`;
-    const count = (h.participant_agent_ids || []).length;
-    card.innerHTML = `<strong>${esc(h.name)}</strong><div class="meta">${count} participant${count !== 1 ? "s" : ""}</div>`;
-    card.addEventListener("click", () => loadHandoff(h));
-    c.appendChild(card);
-  });
+  const sel = $("#handoff-select");
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Select Workflow —</option>' +
+    (studio.state.handoffs || []).map(h =>
+      `<option value="${esc(h.id)}"${h.id === studio.currentHandoffId ? " selected" : ""}>${esc(h.name)}</option>`
+    ).join("");
 }
 
 /* ── Participant management ─────────────────────────────── */
 function populateParticipantAddSelect() {
-  const sel = $("#handoff-participant-select");
+  const container = $("#handoff-participant-checks");
+  if (!container) return;
   const used = new Set(studio.hoParticipantIds || []);
-  sel.innerHTML = '<option value="">— Select agent —</option>' +
-    studio.state.agents
-      .filter((a) => !used.has(a.id))
-      .map((a) => `<option value="${a.id}">${esc(a.name)}</option>`)
-      .join("");
+  const available = studio.state.agents.filter((a) => !used.has(a.id));
+  container.innerHTML = "";
+  if (!available.length) {
+    container.innerHTML = '<span class="ho-participant-empty">追加できるエージェントがありません</span>';
+    return;
+  }
+  available.forEach((a) => {
+    const label = document.createElement("label");
+    label.className = "ho-tgt-check";
+    label.innerHTML = `<input type="checkbox" value="${esc(a.id)}" /><span>${esc(a.name)}</span>`;
+    container.appendChild(label);
+  });
 }
 
 function renderParticipantChips() {
@@ -1518,12 +1547,15 @@ function renderParticipantChips() {
 }
 
 function addHandoffParticipant() {
-  const sel = $("#handoff-participant-select");
-  const agentId = sel.value;
-  if (!agentId || (studio.hoParticipantIds || []).includes(agentId)) return;
-  studio.hoParticipantIds = [...(studio.hoParticipantIds || []), agentId];
+  const container = $("#handoff-participant-checks");
+  if (!container) return;
+  const checked = [...container.querySelectorAll('input[type="checkbox"]:checked')].map(cb => cb.value);
+  if (!checked.length) return;
+  const existing = new Set(studio.hoParticipantIds || []);
+  checked.forEach(id => existing.add(id));
+  studio.hoParticipantIds = [...existing];
   renderParticipantChips();
-  sel.value = "";
+  markHandoffDirty();
 }
 
 function removeHandoffParticipant(agentId) {
@@ -1533,6 +1565,7 @@ function removeHandoffParticipant(agentId) {
   );
   renderParticipantChips();
   renderHandoffRules();
+  markHandoffDirty();
 }
 
 /* ── Start-agent select ─────────────────────────────────── */
@@ -1610,11 +1643,13 @@ function addHandoffRule() {
   $("#rule-src-select").value = "";
   $$("#rule-tgt-checks input").forEach((cb) => { cb.checked = false; });
   renderHandoffRules();
+  markHandoffDirty();
 }
 
 function removeHandoffRule(idx) {
   studio.hoRules = (studio.hoRules || []).filter((_, i) => i !== idx);
   renderHandoffRules();
+  markHandoffDirty();
 }
 
 /* ── Form snapshot (unsaved state) ─────────────────────── */
@@ -1653,6 +1688,7 @@ function loadHandoff(h) {
   renderHandoffGraph(h);
   updateHandoffAgentStrip(h);
   setStatus("#handoff-status", `Loaded ${h.name}`);
+  clearHandoffDirty();
 }
 
 /* ── Collect form data ──────────────────────────────────── */
@@ -1671,9 +1707,12 @@ async function saveHandoff() {
     updateHandoffAgentStrip(h);
     setStatus("#handoff-status", p.message);
     log(p.message, h);
+    clearHandoffDirty();
+    showToast("ワークフローを保存しました");
   } catch (e) {
     setStatus("#handoff-status", e.message);
     log("Failed to save handoff", { error: e.message });
+    showToast("保存に失敗しました", "error");
   }
 }
 
@@ -1713,6 +1752,7 @@ function newHandoff() {
   loadHandoff(blank);
   clearHandoffChat();
   setStatus("#handoff-status", "New handoff");
+  clearHandoffDirty();
 }
 
 /* ── Agent strip (participants status bar) ──────────────── */
@@ -3371,8 +3411,43 @@ function bindEvents() {
   $("#save-handoff-btn").addEventListener("click", saveHandoff);
   $("#delete-handoff-btn").addEventListener("click", deleteHandoff);
   $("#add-participant-btn").addEventListener("click", addHandoffParticipant);
-  $("#handoff-participant-select").addEventListener("keydown", (e) => { if (e.key === "Enter") addHandoffParticipant(); });
+  // Remove old single-select keydown handler (now using checkboxes)
   $("#add-rule-btn").addEventListener("click", addHandoffRule);
+  // Mark dirty on form field changes
+  ["#handoff-name", "#handoff-description", "#handoff-termination-keyword"].forEach(sel => {
+    $(sel)?.addEventListener("input", markHandoffDirty);
+  });
+  $("#handoff-autonomous")?.addEventListener("change", markHandoffDirty);
+  $("#handoff-start-agent")?.addEventListener("change", markHandoffDirty);
+  // Handoff workflow select dropdown
+  $("#handoff-select")?.addEventListener("change", () => {
+    const id = $("#handoff-select").value;
+    if (!id) { newHandoff(); return; }
+    const h = (studio.state.handoffs || []).find(x => x.id === id);
+    if (h) loadHandoff(h);
+  });
+  // Toggle Test Handoff panel
+  $("#ho-toggle-chat-btn")?.addEventListener("click", () => {
+    const grid = $("#ho-main-grid");
+    const label = $("#ho-toggle-chat-label");
+    const isHidden = grid.classList.toggle("chat-hidden");
+    if (label) label.textContent = isHidden ? "Test ▶" : "Test ◀";
+  });
+  // ResizeObserver: redraw edges when graph panel resizes (e.g. chat panel toggle)
+  const _hoShellEl = document.querySelector(".handoff-viz-panel .ho-canvas-shell");
+  if (_hoShellEl && window.ResizeObserver) {
+    let _hoEdgeRedrawTimer = null;
+    new ResizeObserver(() => {
+      clearTimeout(_hoEdgeRedrawTimer);
+      _hoEdgeRedrawTimer = setTimeout(() => {
+        const hId = studio.currentHandoffId;
+        const hObj = hId ? (studio.state?.handoffs || []).find(x => x.id === hId) : null;
+        if (!hObj) return;
+        const svgEl = $("#ho-edge-layer");
+        if (svgEl) drawHoEdges(svgEl, hObj);
+      }, 30);
+    }).observe(_hoShellEl);
+  }
   // Handoff chat
   $("#handoff-chat-send-btn").addEventListener("click", sendHandoffMessage);
   $("#handoff-chat-input").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendHandoffMessage(); } });

@@ -391,158 +391,177 @@
       <section id="page-handoffs" class="page">
         <div class="handoffs-layout">
 
-          <!-- Handoff list -->
-            <div class="panel handoff-list-panel">
-              <div class="panel-head">
-                <h2>Handoff Workflows</h2>
-                <button id="new-handoff-btn" class="btn btn-ghost btn-sm">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  New
-                </button>
-              </div>
-              <div id="handoff-list" class="card-stack"></div>
+          <!-- Topbar: workflow selector -->
+          <div class="ho-topbar">
+            <div class="ho-topbar-left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+              <span class="ho-topbar-title">Handoff Workflows</span>
+              <select id="handoff-select" class="ho-topbar-select">
+                <option value="">— Select Workflow —</option>
+              </select>
+              <button id="new-handoff-btn" class="btn btn-ghost btn-sm">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New
+              </button>
+              <button id="delete-handoff-btn" class="btn btn-danger btn-sm" title="Delete">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+              <span id="handoff-status" class="status-badge">Ready</span>
+              <span id="handoff-dirty-badge" class="ho-dirty-badge" style="display:none">● 未保存</span>
             </div>
+            <div class="ho-topbar-right">
+              <button id="save-handoff-btn" class="btn btn-primary btn-sm">Save</button>
+              <button id="ho-toggle-chat-btn" class="btn btn-ghost btn-sm" title="Test Handoffを表示/非表示">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 0 2 2z"/></svg>
+                <span id="ho-toggle-chat-label">Test ▶</span>
+              </button>
+            </div>
+          </div>
 
-            <!-- Configuration form -->
-            <div class="panel handoff-config-panel">
-              <div class="panel-head handoff-config-head">
-                <div class="handoff-config-title">
+          <!-- Main grid: left (graph + config) + right (chat) -->
+          <div class="ho-main-grid chat-hidden" id="ho-main-grid">
+
+            <!-- Left column -->
+            <div class="ho-left-col">
+
+              <!-- Handoff Graph -->
+              <div class="panel handoff-viz-panel">
+                <div class="panel-head">
+                  <h2>Handoff Graph</h2>
+                  <div class="ho-graph-controls">
+                    <button id="ho-zoom-out-btn" class="btn btn-ghost btn-sm ho-ctrl-btn" title="Zoom out">−</button>
+                    <span id="ho-zoom-label" class="ho-zoom-label">100%</span>
+                    <button id="ho-zoom-in-btn" class="btn btn-ghost btn-sm ho-ctrl-btn" title="Zoom in">+</button>
+                    <button id="ho-zoom-reset-btn" class="btn btn-ghost btn-sm ho-ctrl-btn" title="Reset zoom">⟲</button>
+                    <button id="ho-layout-btn" class="btn btn-ghost btn-sm ho-ctrl-btn" title="Reset layout">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg>
+                      Layout
+                    </button>
+                  </div>
+                  <span class="form-hint ho-viz-hint">Drag nodes · scroll to zoom · drag background to pan</span>
+                </div>
+                <div class="handoff-viz-body">
+                  <div class="ho-canvas-shell">
+                    <div id="ho-viewport" class="ho-viewport">
+                      <svg id="ho-edge-layer"></svg>
+                      <div id="ho-canvas" class="ho-canvas"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Configuration form -->
+              <div class="panel handoff-config-panel">
+                <div class="panel-head">
                   <h2>Configuration</h2>
-                  <span id="handoff-status" class="status-badge">Ready</span>
                 </div>
-                <div class="handoff-config-actions">
-                  <button id="delete-handoff-btn" class="btn btn-danger btn-sm" title="Delete">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                  </button>
-                  <button id="save-handoff-btn" class="btn btn-primary btn-sm">Save</button>
-                </div>
-              </div>
-              <div class="panel-body">
-                <div class="field-row two-col">
-                  <div class="field"><label>Workflow name</label><input id="handoff-name" type="text" placeholder="Customer Support Handoff" /></div>
-                  <div class="field"><label>Description</label><input id="handoff-description" type="text" placeholder="Routes customer issues to specialists" /></div>
-                </div>
-
-                <!-- Participants: select + Add -->
-                <fieldset class="form-block">
-                  <legend class="form-legend">Participants</legend>
-                  <div class="ho-add-row">
-                    <select id="handoff-participant-select" class="ho-add-select">
-                      <option value="">— Select agent —</option>
-                    </select>
-                    <button id="add-participant-btn" class="btn btn-ghost btn-sm">Add</button>
-                  </div>
-                  <div id="handoff-participants-list" class="ho-chip-list"></div>
-                </fieldset>
-
-                <!-- Start Agent -->
-                <fieldset class="form-block">
-                  <legend class="form-legend">Start Agent</legend>
-                  <select id="handoff-start-agent">
-                    <option value="">— Select start agent —</option>
-                  </select>
-                </fieldset>
-
-                <!-- Routing Rules: source → target (checkboxes) + Add -->
-                <fieldset class="form-block">
-                  <legend class="form-legend">Routing Rules (Edges)</legend>
-                  <p class="form-hint">Define handoff edges. No rules = no edges in graph.</p>
-                  <div class="ho-rule-builder">
-                    <div class="ho-rule-builder-top">
-                      <select id="rule-src-select" class="ho-add-select">
-                        <option value="">Source agent</option>
-                      </select>
-                      <span class="rule-arrow">→</span>
-                      <button id="add-rule-btn" class="btn btn-ghost btn-sm">Add Edge</button>
-                    </div>
-                    <div class="ho-rule-builder-targets">
-                      <p class="form-hint" style="margin:0 0 4px">To (select one or more):</p>
-                      <div id="rule-tgt-checks" class="ho-tgt-checks"></div>
-                    </div>
-                  </div>
-                  <div id="handoff-rules-list" class="ho-chip-list ho-rules-list"></div>
-                </fieldset>
-
-                <!-- Options -->
-                <fieldset class="form-block">
-                  <legend class="form-legend">Options</legend>
+                <div class="panel-body">
                   <div class="field-row two-col">
-                    <div class="field"><label>Termination keyword</label><input id="handoff-termination-keyword" type="text" value="goodbye" placeholder="goodbye" /></div>
-                    <div class="field field-inline-check">
-                      <label class="inline-check-label">
-                        <input id="handoff-autonomous" type="checkbox" />
-                        <span>Autonomous mode</span>
-                      </label>
+                    <div class="field"><label>Workflow name</label><input id="handoff-name" type="text" placeholder="Customer Support Handoff" /></div>
+                    <div class="field"><label>Description</label><input id="handoff-description" type="text" placeholder="Routes customer issues to specialists" /></div>
+                  </div>
+
+                  <!-- Participants: checkbox multi-select + Add -->
+                  <fieldset class="form-block">
+                    <legend class="form-legend">Participants</legend>
+                    <div class="ho-participant-add-wrap">
+                      <div id="handoff-participant-checks" class="ho-participant-checks"></div>
+                      <button id="add-participant-btn" class="btn btn-ghost btn-sm ho-participant-add-btn">Add Selected</button>
                     </div>
-                  </div>
-                </fieldset>
-              </div>
-            </div>
+                    <div id="handoff-participants-list" class="ho-chip-list"></div>
+                  </fieldset>
 
-          <!-- Handoff Graph — at the top of the right panel -->
-            <div class="panel handoff-viz-panel">
-              <div class="panel-head">
-                <h2>Handoff Graph</h2>
-                <div class="ho-graph-controls">
-                  <button id="ho-zoom-out-btn" class="btn btn-ghost btn-sm ho-ctrl-btn" title="Zoom out">−</button>
-                  <span id="ho-zoom-label" class="ho-zoom-label">100%</span>
-                  <button id="ho-zoom-in-btn" class="btn btn-ghost btn-sm ho-ctrl-btn" title="Zoom in">+</button>
-                  <button id="ho-zoom-reset-btn" class="btn btn-ghost btn-sm ho-ctrl-btn" title="Reset zoom">⟲</button>
-                  <button id="ho-layout-btn" class="btn btn-ghost btn-sm ho-ctrl-btn" title="Reset layout">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg>
-                    Layout
+                  <!-- Start Agent -->
+                  <fieldset class="form-block">
+                    <legend class="form-legend">Start Agent</legend>
+                    <select id="handoff-start-agent">
+                      <option value="">— Select start agent —</option>
+                    </select>
+                  </fieldset>
+
+                  <!-- Routing Rules: source → target (checkboxes) + Add -->
+                  <fieldset class="form-block">
+                    <legend class="form-legend">Routing Rules (Edges)</legend>
+                    <p class="form-hint">Define handoff edges. No rules = no edges in graph.</p>
+                    <div class="ho-rule-builder">
+                      <div class="ho-rule-builder-top">
+                        <select id="rule-src-select" class="ho-add-select">
+                          <option value="">Source agent</option>
+                        </select>
+                        <span class="rule-arrow">→</span>
+                        <button id="add-rule-btn" class="btn btn-ghost btn-sm">Add Edge</button>
+                      </div>
+                      <div class="ho-rule-builder-targets">
+                        <p class="form-hint" style="margin:0 0 4px">To (select one or more):</p>
+                        <div id="rule-tgt-checks" class="ho-tgt-checks"></div>
+                      </div>
+                    </div>
+                    <div id="handoff-rules-list" class="ho-chip-list ho-rules-list"></div>
+                  </fieldset>
+
+                  <!-- Options -->
+                  <fieldset class="form-block">
+                    <legend class="form-legend">Options</legend>
+                    <div class="field-row two-col">
+                      <div class="field"><label>Termination keyword</label><input id="handoff-termination-keyword" type="text" value="goodbye" placeholder="goodbye" /></div>
+                      <div class="field field-inline-check">
+                        <label class="inline-check-label">
+                          <input id="handoff-autonomous" type="checkbox" />
+                          <span>Autonomous mode</span>
+                        </label>
+                      </div>
+                    </div>
+                  </fieldset>
+                </div>
+              </div>
+
+            </div><!-- /ho-left-col -->
+
+            <!-- Right column: Test Handoff (collapsible) -->
+            <div class="ho-chat-col" id="ho-chat-col">
+              <div class="panel handoff-chat-panel">
+                <div class="handoff-chat-header">
+                  <div class="handoff-chat-header-left">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span>Test Handoff</span>
+                  </div>
+                  <div class="handoff-chat-header-right">
+                    <div class="handoff-active-agent-badge" id="handoff-active-agent-badge">
+                      <span class="active-agent-dot"></span>
+                      <span id="handoff-active-agent-name">No active agent</span>
+                    </div>
+                    <button id="handoff-new-thread-btn" class="btn btn-ghost btn-sm">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      New Thread
+                    </button>
+                    <button class="btn btn-ghost btn-sm" title="閉じる" onclick="document.getElementById('ho-main-grid').classList.add('chat-hidden'); document.getElementById('ho-toggle-chat-label').textContent='Test ▶';">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Participant strip -->
+                <div id="handoff-agent-strip" class="handoff-agent-strip"></div>
+
+                <!-- Messages + thinking process -->
+                <div id="handoff-chat-messages" class="handoff-chat-messages">
+                  <div class="handoff-empty-chat">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                    <p>Save the handoff configuration, then start chatting to test agent routing.</p>
+                  </div>
+                </div>
+
+                <div class="chat-input-bar">
+                  <input id="handoff-chat-input" type="text" placeholder="Type a message to start the handoff test..." />
+                  <button id="handoff-chat-send-btn" class="btn btn-primary btn-sm chat-send">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                   </button>
                 </div>
-                <span class="form-hint ho-viz-hint">Drag nodes · scroll to zoom · drag background to pan</span>
               </div>
-              <div class="handoff-viz-body">
-                <div class="ho-canvas-shell">
-                  <div id="ho-viewport" class="ho-viewport">
-                    <svg id="ho-edge-layer"></svg>
-                    <div id="ho-canvas" class="ho-canvas"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            </div><!-- /ho-chat-col -->
 
-            <!-- Chat test panel -->
-            <div class="panel handoff-chat-panel">
-              <div class="handoff-chat-header">
-                <div class="handoff-chat-header-left">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                  <span>Test Handoff</span>
-                </div>
-                <div class="handoff-chat-header-right">
-                  <div class="handoff-active-agent-badge" id="handoff-active-agent-badge">
-                    <span class="active-agent-dot"></span>
-                    <span id="handoff-active-agent-name">No active agent</span>
-                  </div>
-                  <button id="handoff-new-thread-btn" class="btn btn-ghost btn-sm">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    New Thread
-                  </button>
-                </div>
-              </div>
-
-              <!-- Participant strip -->
-              <div id="handoff-agent-strip" class="handoff-agent-strip"></div>
-
-              <!-- Messages + thinking process -->
-              <div id="handoff-chat-messages" class="handoff-chat-messages">
-                <div class="handoff-empty-chat">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  <p>Save the handoff configuration, then start chatting to test agent routing.</p>
-                </div>
-              </div>
-
-              <div class="chat-input-bar">
-                <input id="handoff-chat-input" type="text" placeholder="Type a message to start the handoff test..." />
-                <button id="handoff-chat-send-btn" class="btn btn-primary btn-sm chat-send">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                </button>
-              </div>
-            </div>
-        </div>
+          </div><!-- /ho-main-grid -->
+        </div><!-- /handoffs-layout -->
       </section>
 
       <!-- ============== PAGE: Skill Visualization ============== -->
@@ -774,6 +793,9 @@
       </div>
     </div>
 
-    <script src="/static/app.js?v=20260403o" defer></script>
+    <!-- Toast notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="/static/app.js?v=20260405e" defer></script>
   </body>
 </html>
