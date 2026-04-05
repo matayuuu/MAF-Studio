@@ -1,6 +1,6 @@
 ---
 name: auto-insurance-recommendation
-description: Recommend auto insurance plans based on customer age, income, and profile.
+description: 顧客の年齢・年収・プロフィールに基づき、最適な自動車保険プランを提案する。
 ---
 
 # Skill: auto_insurance_recommendation
@@ -14,6 +14,11 @@ description: Recommend auto insurance plans based on customer age, income, and p
 - 既に自動車保険契約がある場合は重複加入を避け「見直しプラン」として提案する
 - 提案時は月額保険料・保障内容・特徴を明確に説明する
 - 最大3プランを比較形式で提示する
+- 複数プランを提示する場合は必ず以下のテーブル形式で出力する:
+
+| プラン | 月額保険料 | 保障内容 | 特徴 |
+|---|---|---|---|
+| {商品名} | {金額}円 | {保障の概要} | {特徴} |
 
 ## 業務上の暗黙知
 - 車購入直後の顧客は納車日に合わせた開始日を設定する

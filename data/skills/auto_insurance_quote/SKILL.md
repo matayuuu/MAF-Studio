@@ -1,6 +1,6 @@
 ---
 name: auto-insurance-quote
-description: Generate a formal auto insurance quote with adjusted premium based on vehicle type and age.
+description: 車種・年齢に応じた保険料を算出し、自動車保険の正式見積もりを作成する。
 ---
 
 # auto_insurance_quote

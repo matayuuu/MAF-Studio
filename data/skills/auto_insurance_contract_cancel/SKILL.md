@@ -1,6 +1,6 @@
 ---
 name: auto-insurance-contract-cancel
-description: Cancel an existing auto insurance contract and update contracts.csv.
+description: 既存の自動車保険契約を解約し、contracts.csv を更新する。
 ---
 
 # Skill: auto_insurance_contract_cancel

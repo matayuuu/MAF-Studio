@@ -1,6 +1,6 @@
 ---
 name: identity-verification
-description: Verify customer identity by confirming the customer ID exists in the database.
+description: 顧客IDがデータベースに存在するか確認し、本人確認を行う。
 ---
 
 # Skill: identity_verification

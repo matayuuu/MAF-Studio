@@ -1,6 +1,6 @@
 ---
 name: customer-profile-summary
-description: Generate a unified customer profile including contracts and activity history.
+description: 契約情報・活動履歴を含む顧客の統合プロファイルを生成する。
 ---
 
 # Skill: customer_profile_summary

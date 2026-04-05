@@ -23,7 +23,7 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from typing import Any
 
-from agent_framework import Agent
+from agent_framework import Agent, ContextProvider
 from agent_framework.orchestrations import (
     HandoffAgentUserRequest,
     HandoffBuilder,
@@ -38,6 +38,45 @@ from app.services.agent_runtime import (
     _resolve_client,
 )
 from app.services.skill_runner import build_skills_provider
+
+
+# -- Customer context state injector -------------------------------------------
+
+_CTX_KEY_LABELS: dict[str, str] = {
+    "customer_id": "customer_id",
+    "full_name": "氏名",
+    "age": "年齢",
+    "gender": "性別",
+    "occupation": "職業",
+    "annual_income": "年収",
+    "prefecture": "都道府県",
+    "segment": "セグメント",
+}
+
+
+class _CustomerContextProvider(ContextProvider):
+    """Injects HandoffSession.customer_context into each agent's instructions before run.
+
+    Holds a *live reference* to the session's customer_context dict so that
+    context accumulated by any skill at any hop is automatically visible to
+    every subsequent agent invocation — enabling reliable multi-hop state passing.
+    """
+
+    def __init__(self, customer_context: dict) -> None:
+        super().__init__(source_id="customer_context_state")
+        self._ctx = customer_context  # reference — updated in-place by stream_handoff_turn
+
+    async def before_run(self, *, agent: Any, session: Any, context: Any, state: dict) -> None:
+        lines = [
+            f"- {label}: {self._ctx[key]}"
+            for key, label in _CTX_KEY_LABELS.items()
+            if self._ctx.get(key) not in (None, "")
+        ]
+        if lines:
+            context.extend_instructions(
+                self.source_id,
+                "【引き継ぎ状態】\n" + "\n".join(lines),
+            )
 
 
 # -- Internal workflow state (not exposed to API) ------------------------------
@@ -166,11 +205,15 @@ def _sse(event: str, data: dict) -> str:
 async def _build_workflow_state(
     handoff: HandoffDefinition,
     agents_by_id: dict[str, AgentConfig],
+    customer_context: dict,
 ) -> _WorkflowState:
     """Build HandoffBuilder Workflow. Raises ValueError if no real clients available."""
     af_agents: list[Agent] = []
     name_to_config: dict[str, AgentConfig] = {}
     all_cleanups: list[Any] = []
+
+    # Shared provider injecting the live customer_context into every agent's instructions
+    ctx_provider = _CustomerContextProvider(customer_context)
 
     for agent_id in handoff.participant_agent_ids:
         agent_config = agents_by_id.get(agent_id)
@@ -183,12 +226,13 @@ async def _build_workflow_state(
             continue
 
         skills_provider = build_skills_provider(agent_config.skill_ids)
+        providers = [ctx_provider, skills_provider] if skills_provider else [ctx_provider]
         af_agent = Agent(
             client=client,
             name=agent_config.name,
             description=agent_config.description or None,
             instructions=agent_config.instructions or "",
-            context_providers=[skills_provider] if skills_provider else None,
+            context_providers=providers,
         )
         af_agents.append(af_agent)
         name_to_config[agent_config.name] = agent_config
@@ -257,7 +301,7 @@ async def stream_handoff_turn(
     # -- Lazy-build workflow state on first turn --------------------------------
     if session.session_id not in _workflow_states:
         try:
-            ws = await _build_workflow_state(handoff, agents_by_id)
+            ws = await _build_workflow_state(handoff, agents_by_id, session.customer_context)
             _workflow_states[session.session_id] = ws
         except ValueError:
             # Fall back to mock mode using start agent

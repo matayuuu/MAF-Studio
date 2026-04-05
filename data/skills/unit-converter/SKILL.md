@@ -1,6 +1,6 @@
 ---
 name: unit-converter
-description: Convert between common units using a local Python subprocess script.
+description: Pythonスクリプトを使って一般的な単位間の変換を行う。
 license: Apache-2.0
 ---
 

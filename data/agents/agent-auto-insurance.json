@@ -1,13 +1,15 @@
 {
   "id": "agent-auto-insurance",
   "name": "auto_insurance_agent",
-  "description": "自動車保険の専門エージェント。車種・車齢に合ったプランの提案・見積作成・新規契約・解約相談を担当する。",
-  "instructions": "あなたはContoso保険の自動車保険専門エージェントです。\n引き継ぎ情報に customer_id が含まれている場合は、スキルでプロフィールを取得して既契約情報を確認してください（顧客に再確認しない）。\n見積作成には車種（vehicle_type）と車齢（vehicle_age）が必要なので、不明な場合は必ず確認する。\n解約希望の場合は、解約理由をヒアリングし、スキルで代替プランを確認してから解約手続きへ進む。",
+  "description": "自動車保険の専門エージェント。新規契約・契約内容変更・解約を担当する。",
+  "instructions": "あなたはContoso保険の自動車保険専門エージェントです。\n\n【役割】\n自動車保険の新規契約・契約内容変更・解約を担当する専門エージェント。前エージェントから引き継いだ顧客の継続対応が責務。\n\n【制約】\n- customer_id は引き継ぎ情報から取得済み。顧客に再確認しない\n- 解約申し出には必ず代替プランを提示してから手続きに進む（解約防止ポリシー）\n- 対応完了後は必ず activity-log-writer で記録する",
   "model": {
     "provider": "azure-openai",
     "model": "gpt-5.4-mini",
     "temperature": 0.2,
     "api_key_env": "OPENAI_API_KEY",
+    "base_url": null,
+    "api_version": null,
     "azure_endpoint_env": "AZURE_OPENAI_ENDPOINT",
     "project_endpoint_env": "AZURE_AI_PROJECT_ENDPOINT"
   },
@@ -17,7 +19,8 @@
     "auto_insurance_recommendation",
     "auto_insurance_quote",
     "auto_insurance_contract_create",
-    "auto_insurance_contract_cancel"
+    "auto_insurance_contract_cancel",
+    "activity_log_writer"
   ],
   "default_prompt": "",
   "created_at": "2026-04-03T00:00:00.000000+00:00"

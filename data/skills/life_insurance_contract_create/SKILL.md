@@ -1,6 +1,6 @@
 ---
 name: life-insurance-contract-create
-description: Register a new life insurance contract with beneficiary information in contracts.csv.
+description: 受取人情報を含む新規の生命保険契約を contracts.csv に登録する。
 ---
 
 # life_insurance_contract_create

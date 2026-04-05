@@ -1,6 +1,6 @@
 ---
 name: activity-log-writer
-description: Write a customer service activity record to activities.csv.
+description: 顧客対応の活動記録を activities.csv に書き込む。
 ---
 
 # Skill: activity_log_writer

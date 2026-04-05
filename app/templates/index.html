@@ -246,9 +246,22 @@
         <div class="skills-layout">
           <div class="skills-main-col">
             <div class="panel">
-              <div class="panel-head"><h2>Skill Library</h2></div>
+              <div class="panel-head">
+                <h2>Skill Library</h2>
+                <span id="skill-count-badge" class="skill-count-badge"></span>
+              </div>
+              <div class="skill-filter-bar">
+                <div class="skill-search-wrap">
+                  <svg class="skill-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input id="skill-search" type="text" class="skill-search-input" placeholder="キーワード検索..." oninput="populateSkillList()" />
+                  <button id="skill-search-clear" class="skill-search-clear" style="display:none" onclick="clearSkillSearch()">&#x2715;</button>
+                </div>
+                <select id="skill-agent-filter" class="skill-agent-filter" onchange="populateSkillList()">
+                  <option value="">すべてのエージェント</option>
+                </select>
+              </div>
               <div id="skill-list" class="card-stack"></div>
-              <div class="empty-state" id="skills-empty"><p>No skills imported yet.</p></div>
+              <div class="empty-state" id="skills-empty"><p>No skills found.</p></div>
             </div>
           </div>
 
@@ -691,6 +704,74 @@
           </div>
         </div>
       </section>
+    </div>
+
+    <!-- ── Skill Detail Modal ──────────────────────────────── -->
+    <div id="skill-modal-overlay" class="skill-modal-overlay" onclick="closeSkillModal(event)">
+      <div class="skill-modal">
+        <!-- Header -->
+        <div class="skill-modal-header">
+          <div class="skill-modal-title-wrap">
+            <span class="skill-modal-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7z"/></svg>
+            </span>
+            <h3 id="skill-modal-title" class="skill-modal-name"></h3>
+          </div>
+          <div class="skill-modal-actions">
+            <button class="btn btn-sm btn-danger" onclick="confirmDeleteSkill()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+              スキル削除
+            </button>
+            <button class="btn btn-sm btn-ghost" onclick="closeSkillModal()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+        <!-- Body: sidebar + content -->
+        <div class="skill-modal-body">
+          <!-- File sidebar -->
+          <div class="skill-modal-sidebar">
+            <div class="skill-modal-sidebar-header">
+              <span class="skill-modal-sidebar-label">ファイル</span>
+              <button class="skill-modal-new-file-btn" title="新規ファイルを作成" onclick="promptNewSkillFile()">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+            </div>
+            <div id="skill-modal-file-list" class="skill-modal-file-list"></div>
+          </div>
+          <!-- Content area -->
+          <div class="skill-modal-content-area">
+            <!-- View mode -->
+            <div id="skill-modal-view">
+              <div class="skill-modal-file-bar">
+                <span id="skill-modal-file-path" class="skill-modal-file-path"></span>
+                <div class="skill-modal-file-actions">
+                  <button class="btn btn-sm" onclick="startEditSkillFile()">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    編集
+                  </button>
+                  <button id="skill-modal-file-delete-btn" class="btn btn-sm btn-danger" onclick="confirmDeleteSkillFile()">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                    削除
+                  </button>
+                </div>
+              </div>
+              <div id="skill-modal-content" class="skill-modal-content"></div>
+            </div>
+            <!-- Edit mode -->
+            <div id="skill-modal-edit" style="display:none;">
+              <div class="skill-modal-file-bar">
+                <span id="skill-modal-edit-path" class="skill-modal-file-path"></span>
+              </div>
+              <textarea id="skill-modal-textarea" class="skill-modal-textarea" spellcheck="false"></textarea>
+              <div class="skill-modal-edit-actions">
+                <button class="btn btn-primary btn-sm" onclick="saveEditSkillFile()">保存</button>
+                <button class="btn btn-ghost btn-sm" onclick="cancelEditSkillFile()">キャンセル</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script src="/static/app.js?v=20260403o" defer></script>

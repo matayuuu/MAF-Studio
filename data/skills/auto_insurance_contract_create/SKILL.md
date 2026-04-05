@@ -1,6 +1,6 @@
 ---
 name: auto-insurance-contract-create
-description: Register a new auto insurance contract in contracts.csv.
+description: 新規の自動車保険契約を contracts.csv に登録する。
 ---
 
 # Skill: auto_insurance_contract_create

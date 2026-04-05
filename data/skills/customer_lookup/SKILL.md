@@ -1,6 +1,6 @@
 ---
 name: customer-lookup
-description: Search for a customer by ID or name from customers.csv.
+description: 顧客IDまたは氏名で customers.csv から顧客情報を検索する。
 ---
 
 # Skill: customer_lookup

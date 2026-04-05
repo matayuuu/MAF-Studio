@@ -136,17 +136,280 @@ function populateAgentList() {
 }
 
 function populateSkillList() {
+  // Refresh agent filter options
+  const agentSel = $("#skill-agent-filter");
+  if (agentSel) {
+    const currentVal = agentSel.value;
+    agentSel.innerHTML = '<option value="">すべてのエージェント</option>' +
+      studio.state.agents
+        .filter(a => a.skill_ids && a.skill_ids.length > 0)
+        .map(a => `<option value="${esc(a.id)}"${a.id === currentVal ? ' selected' : ''}>${esc(a.name)}</option>`)
+        .join("");
+  }
+
+  const query = (($("#skill-search")?.value) || "").trim().toLowerCase();
+  const agentId = agentSel?.value || "";
+
+  // Show/hide clear button
+  const clearBtn = $("#skill-search-clear");
+  if (clearBtn) clearBtn.style.display = query ? "" : "none";
+
+  // Determine visible skill IDs for agent filter
+  let agentSkillIds = null;
+  if (agentId) {
+    const agent = studio.state.agents.find(a => a.id === agentId);
+    agentSkillIds = agent?.skill_ids || [];
+  }
+
   const c = $("#skill-list");
   c.innerHTML = "";
   const empty = $("#skills-empty");
-  if (!studio.state.skills.length) { empty.style.display = ""; return; }
+
+  let skills = studio.state.skills;
+  if (agentSkillIds !== null) {
+    skills = skills.filter(s => agentSkillIds.includes(s.id));
+  }
+  if (query) {
+    skills = skills.filter(s =>
+      s.name.toLowerCase().includes(query) ||
+      (s.description || "").toLowerCase().includes(query) ||
+      s.id.toLowerCase().includes(query)
+    );
+  }
+
+  // Update count badge
+  const badge = $("#skill-count-badge");
+  if (badge) {
+    const total = studio.state.skills.length;
+    badge.textContent = skills.length < total ? `${skills.length} / ${total}` : `${total}`;
+    badge.style.display = total > 0 ? "" : "none";
+  }
+
+  if (!skills.length) { empty.style.display = ""; return; }
   empty.style.display = "none";
-  studio.state.skills.forEach((s) => {
+
+  skills.forEach((s) => {
+    const isAgentSkill = agentSkillIds !== null && agentSkillIds.includes(s.id);
     const card = document.createElement("div");
-    card.className = "skill-card";
+    card.className = "skill-card" + (isAgentSkill ? " skill-card--agent" : "");
     card.innerHTML = `<strong>${esc(s.name)}</strong><div class="meta">${esc(s.description || "No description")}</div><span class="skill-chip">scripts: ${s.scripts.length}</span>`;
+    card.addEventListener("click", () => openSkillModal(s.id));
     c.appendChild(card);
   });
+}
+
+function clearSkillSearch() {
+  const el = $("#skill-search");
+  if (el) { el.value = ""; el.focus(); }
+  populateSkillList();
+}
+
+/* ── Skill Modal ─────────────────────────────────────────── */
+let _skillModalId = null;
+let _skillModalFiles = [];
+let _skillModalCurrentFile = null;
+
+async function openSkillModal(skillId) {
+  _skillModalId = skillId;
+  _skillModalFiles = [];
+  _skillModalCurrentFile = null;
+  const overlay = $("#skill-modal-overlay");
+  $("#skill-modal-title").textContent = skillId;
+  $("#skill-modal-file-list").innerHTML = "<div style='padding:10px 12px;font-size:0.78rem;color:var(--text-secondary)'>読み込み中...</div>";
+  $("#skill-modal-content").textContent = "";
+  $("#skill-modal-view").style.display = "";
+  $("#skill-modal-edit").style.display = "none";
+  overlay.classList.add("open");
+
+  try {
+    // Load file list and skill metadata in parallel
+    const [filesRes, metaRes] = await Promise.all([
+      fetch(`/api/skills/${encodeURIComponent(skillId)}/files`),
+      fetch(`/api/skills/${encodeURIComponent(skillId)}/content`),
+    ]);
+    if (!filesRes.ok) throw new Error(await filesRes.text());
+    const filesData = await filesRes.json();
+    _skillModalFiles = filesData.files;
+    if (metaRes.ok) {
+      const metaData = await metaRes.json();
+      $("#skill-modal-title").textContent = metaData.skill.name;
+    }
+    renderSkillFileList();
+    // Auto-select SKILL.md first
+    const defaultFile = _skillModalFiles.find(f => f.path === "SKILL.md") || _skillModalFiles[0];
+    if (defaultFile) await selectSkillFile(defaultFile.path);
+  } catch (e) {
+    $("#skill-modal-file-list").textContent = "";
+    $("#skill-modal-content").textContent = `Error: ${e.message}`;
+  }
+}
+
+function renderSkillFileList() {
+  const container = $("#skill-modal-file-list");
+  container.innerHTML = "";
+  // Group by top-level directory
+  const groups = {};
+  _skillModalFiles.forEach(f => {
+    const slash = f.path.indexOf("/");
+    const dir = slash === -1 ? "" : f.path.slice(0, slash);
+    if (!groups[dir]) groups[dir] = [];
+    groups[dir].push(f);
+  });
+  const dirs = Object.keys(groups).sort((a, b) => {
+    if (a === "") return -1;
+    if (b === "") return 1;
+    return a.localeCompare(b);
+  });
+  const extIcon = { md: "📄", py: "🐍", txt: "📝", json: "{}", sh: "⚙", csv: "📊" };
+  dirs.forEach(dir => {
+    if (dir !== "") {
+      const lbl = document.createElement("div");
+      lbl.className = "skill-modal-file-group";
+      lbl.textContent = dir + "/";
+      container.appendChild(lbl);
+    }
+    groups[dir].forEach(f => {
+      const item = document.createElement("div");
+      item.className = "skill-modal-file-item" + (f.path === _skillModalCurrentFile ? " active" : "");
+      item.dataset.path = f.path;
+      const name = f.path.includes("/") ? f.path.split("/").pop() : f.path;
+      const ext = name.includes(".") ? name.split(".").pop().toLowerCase() : "";
+      const icon = extIcon[ext] || "📄";
+      item.innerHTML = `<span class="file-icon">${icon}</span><span class="file-name">${esc(name)}</span>`;
+      item.addEventListener("click", () => selectSkillFile(f.path));
+      container.appendChild(item);
+    });
+  });
+}
+
+async function selectSkillFile(filePath) {
+  _skillModalCurrentFile = filePath;
+  // Update sidebar active state
+  document.querySelectorAll(".skill-modal-file-item").forEach(el => {
+    el.classList.toggle("active", el.dataset.path === filePath);
+  });
+  // Cancel any pending edit
+  cancelEditSkillFile();
+  // Update file bar
+  $("#skill-modal-file-path").textContent = filePath;
+  // Show/hide delete-file button (SKILL.md cannot be deleted)
+  const delBtn = $("#skill-modal-file-delete-btn");
+  if (delBtn) delBtn.style.display = filePath === "SKILL.md" ? "none" : "";
+  $("#skill-modal-content").textContent = "読み込み中...";
+  try {
+    const res = await fetch(`/api/skills/${encodeURIComponent(_skillModalId)}/files/${filePath}`);
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    $("#skill-modal-content").textContent = data.content || "(empty)";
+  } catch (e) {
+    $("#skill-modal-content").textContent = `Error: ${e.message}`;
+  }
+}
+
+function closeSkillModal(e) {
+  if (e && e.target !== e.currentTarget) return;
+  $("#skill-modal-overlay").classList.remove("open");
+  _skillModalId = null;
+  _skillModalCurrentFile = null;
+}
+
+function startEditSkillFile() {
+  const content = $("#skill-modal-content").textContent;
+  $("#skill-modal-textarea").value = content === "(empty)" ? "" : content;
+  $("#skill-modal-edit-path").textContent = _skillModalCurrentFile || "";
+  $("#skill-modal-view").style.display = "none";
+  $("#skill-modal-edit").style.display = "";
+  $("#skill-modal-textarea").focus();
+}
+
+function cancelEditSkillFile() {
+  $("#skill-modal-view").style.display = "";
+  $("#skill-modal-edit").style.display = "none";
+}
+
+async function saveEditSkillFile() {
+  if (!_skillModalId || !_skillModalCurrentFile) return;
+  const content = $("#skill-modal-textarea").value;
+  try {
+    const res = await fetch(`/api/skills/${encodeURIComponent(_skillModalId)}/files/${_skillModalCurrentFile}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    if (data.state) {
+      studio.state = data.state;
+      populateSkillList();
+      populateSkillCheckboxes(studio.currentAgent?.skill_ids || []);
+    }
+    $("#skill-modal-content").textContent = content || "(empty)";
+    cancelEditSkillFile();
+  } catch (e) {
+    alert(`保存失敗: ${e.message}`);
+  }
+}
+
+async function confirmDeleteSkillFile() {
+  if (!_skillModalId || !_skillModalCurrentFile) return;
+  if (!confirm(`ファイル「${_skillModalCurrentFile}」を削除しますか？`)) return;
+  try {
+    const res = await fetch(`/api/skills/${encodeURIComponent(_skillModalId)}/files/${_skillModalCurrentFile}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error(await res.text());
+    _skillModalFiles = _skillModalFiles.filter(f => f.path !== _skillModalCurrentFile);
+    _skillModalCurrentFile = null;
+    renderSkillFileList();
+    $("#skill-modal-file-path").textContent = "";
+    $("#skill-modal-content").textContent = "";
+    if (_skillModalFiles.length > 0) await selectSkillFile(_skillModalFiles[0].path);
+  } catch (e) {
+    alert(`削除失敗: ${e.message}`);
+  }
+}
+
+async function confirmDeleteSkill() {
+  if (!_skillModalId) return;
+  if (!confirm(`スキル「${_skillModalId}」を削除しますか？この操作は元に戻せません。`)) return;
+  try {
+    const res = await fetch(`/api/skills/${encodeURIComponent(_skillModalId)}`, { method: "DELETE" });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    studio.state = data.state;
+    populateSkillList();
+    populateSkillCheckboxes(studio.currentAgent?.skill_ids || []);
+    closeSkillModal();
+  } catch (e) {
+    alert(`削除失敗: ${e.message}`);
+  }
+}
+
+async function promptNewSkillFile() {
+  if (!_skillModalId) return;
+  const input = prompt(
+    "新規ファイルのパスを入力してください\n(例: references/new-rules.md  /  scripts/helper.py)"
+  );
+  if (!input || !input.trim()) return;
+  const filePath = input.trim().replace(/^\/+/, "");
+  if (filePath.includes("..")) { alert("不正なパスです。"); return; }
+  try {
+    const res = await fetch(`/api/skills/${encodeURIComponent(_skillModalId)}/files/${filePath}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: "" }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    if (!_skillModalFiles.find(f => f.path === filePath)) {
+      _skillModalFiles.push({ path: filePath, size: 0 });
+      _skillModalFiles.sort((a, b) => a.path.localeCompare(b.path));
+    }
+    renderSkillFileList();
+    await selectSkillFile(filePath);
+    startEditSkillFile();
+  } catch (e) {
+    alert(`ファイル作成失敗: ${e.message}`);
+  }
 }
 
 function populateSkillCheckboxes(selected = []) {
@@ -604,11 +867,68 @@ function handleSSEMessage(type, data, textEl, msgIndex) {
 /* ── Simple markdown rendering ───────────────────────────── */
 function renderMarkdown(text) {
   if (!text) return "";
+
+  const lines = text.split("\n");
+  const out = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    // --- Table detection: look for separator row (---|---|---)
+    if (i + 1 < lines.length && /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/.test(lines[i + 1])) {
+      const headerCells = lines[i].split("|").map(c => c.trim()).filter((c, idx, arr) => idx > 0 || c !== "" || arr.length > 2 ? true : false);
+      const cleanHeader = headerCells.filter(c => c !== "");
+      i += 2; // skip header + separator
+      const bodyRows = [];
+      while (i < lines.length && lines[i].includes("|")) {
+        const cells = lines[i].split("|").map(c => c.trim());
+        const cleanCells = cells.filter((c, idx) => !(idx === 0 && c === "") && !(idx === cells.length - 1 && c === ""));
+        bodyRows.push(cleanCells);
+        i++;
+      }
+      const thHtml = cleanHeader.map(c => `<th>${inlineMarkdown(c)}</th>`).join("");
+      const trHtml = bodyRows.map(row =>
+        `<tr>${row.map(c => `<td>${inlineMarkdown(c)}</td>`).join("")}</tr>`
+      ).join("");
+      out.push(`<div class="md-table-wrap"><table class="md-table"><thead><tr>${thHtml}</tr></thead><tbody>${trHtml}</tbody></table></div>`);
+      continue;
+    }
+
+    // --- Heading
+    const hMatch = lines[i].match(/^(#{1,3})\s+(.+)$/);
+    if (hMatch) {
+      const level = hMatch[1].length;
+      out.push(`<h${level} class="md-h${level}">${inlineMarkdown(hMatch[2])}</h${level}>`);
+      i++;
+      continue;
+    }
+
+    // --- Bullet list item
+    if (/^\s*[-*]\s+/.test(lines[i])) {
+      out.push(`<li>${inlineMarkdown(lines[i].replace(/^\s*[-*]\s+/, ""))}</li>`);
+      i++;
+      continue;
+    }
+
+    // --- Blank line
+    if (lines[i].trim() === "") {
+      out.push("<br>");
+      i++;
+      continue;
+    }
+
+    // --- Normal paragraph line
+    out.push(inlineMarkdown(lines[i]) + "<br>");
+    i++;
+  }
+
+  return out.join("");
+}
+
+function inlineMarkdown(text) {
   return esc(text)
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/`([^`]+)`/g, "<code>$1</code>")
-    .replace(/\n/g, "<br>");
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
 }
 
 /* ==============================================================

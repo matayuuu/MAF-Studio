@@ -257,6 +257,135 @@ async def run_skill(skill_id: str, payload: SkillRunRequest) -> dict[str, object
     }
 
 
+@app.get("/api/skills/{skill_id}/content")
+async def get_skill_content(skill_id: str) -> dict[str, object]:
+    """Return SKILL.md content and metadata for a skill."""
+    from app.services.skill_runner import safe_slug, scan_skill_dir
+    from app.core.config import SKILLS_DIR
+    skill_dir = SKILLS_DIR / safe_slug(skill_id)
+    record = scan_skill_dir(skill_dir)
+    if not record:
+        raise HTTPException(status_code=404, detail=f"Skill '{skill_id}' not found.")
+    skill_md = skill_dir / "SKILL.md"
+    content = skill_md.read_text(encoding="utf-8") if skill_md.exists() else ""
+    return {"skill": record.model_dump(mode="json"), "content": content}
+
+
+@app.put("/api/skills/{skill_id}/content")
+async def update_skill_content(skill_id: str, payload: dict) -> dict[str, object]:
+    """Overwrite SKILL.md content for a skill."""
+    from app.services.skill_runner import safe_slug
+    from app.core.config import SKILLS_DIR
+    skill_dir = SKILLS_DIR / safe_slug(skill_id)
+    if not skill_dir.exists():
+        raise HTTPException(status_code=404, detail=f"Skill '{skill_id}' not found.")
+    skill_md = skill_dir / "SKILL.md"
+    skill_md.write_text(payload.get("content", ""), encoding="utf-8")
+    state = repo.load_state()
+    state.skills = discover_skills()
+    repo.save_state(state)
+    return {"message": "Skill updated.", "state": state.model_dump(mode="json")}
+
+
+@app.delete("/api/skills/{skill_id}")
+async def delete_skill(skill_id: str) -> dict[str, object]:
+    """Delete a skill folder from the skills directory."""
+    import shutil
+    from app.services.skill_runner import safe_slug
+    from app.core.config import SKILLS_DIR
+    skill_dir = SKILLS_DIR / safe_slug(skill_id)
+    if not skill_dir.exists():
+        raise HTTPException(status_code=404, detail=f"Skill '{skill_id}' not found.")
+    shutil.rmtree(skill_dir)
+    state = repo.load_state()
+    state.skills = discover_skills()
+    repo.save_state(state)
+    return {"message": f"Skill '{skill_id}' deleted.", "state": state.model_dump(mode="json")}
+
+
+@app.get("/api/skills/{skill_id}/files")
+async def list_skill_files(skill_id: str) -> dict[str, object]:
+    """List all files inside a skill directory."""
+    from app.services.skill_runner import safe_slug
+    from app.core.config import SKILLS_DIR
+    skill_dir = SKILLS_DIR / safe_slug(skill_id)
+    if not skill_dir.exists():
+        raise HTTPException(status_code=404, detail=f"Skill '{skill_id}' not found.")
+    files = []
+    for f in sorted(skill_dir.rglob("*")):
+        if f.is_file():
+            files.append({"path": f.relative_to(skill_dir).as_posix(), "size": f.stat().st_size})
+    return {"files": files}
+
+
+@app.get("/api/skills/{skill_id}/files/{file_path:path}")
+async def get_skill_file(skill_id: str, file_path: str) -> dict[str, object]:
+    """Return the content of a specific file within a skill directory."""
+    from app.services.skill_runner import safe_slug
+    from app.core.config import SKILLS_DIR
+    skill_dir = SKILLS_DIR / safe_slug(skill_id)
+    if not skill_dir.exists():
+        raise HTTPException(status_code=404, detail=f"Skill '{skill_id}' not found.")
+    target = (skill_dir / file_path).resolve()
+    try:
+        target.relative_to(skill_dir.resolve())
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid file path.")
+    if not target.exists() or not target.is_file():
+        raise HTTPException(status_code=404, detail=f"File '{file_path}' not found.")
+    content = target.read_text(encoding="utf-8", errors="replace")
+    return {"path": file_path, "content": content}
+
+
+@app.put("/api/skills/{skill_id}/files/{file_path:path}")
+async def update_skill_file(skill_id: str, file_path: str, payload: dict) -> dict[str, object]:
+    """Create or overwrite a specific file within a skill directory."""
+    from app.services.skill_runner import safe_slug
+    from app.core.config import SKILLS_DIR
+    skill_dir = SKILLS_DIR / safe_slug(skill_id)
+    if not skill_dir.exists():
+        raise HTTPException(status_code=404, detail=f"Skill '{skill_id}' not found.")
+    target = (skill_dir / file_path).resolve()
+    try:
+        target.relative_to(skill_dir.resolve())
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid file path.")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(payload.get("content", ""), encoding="utf-8")
+    if file_path == "SKILL.md":
+        state = repo.load_state()
+        state.skills = discover_skills()
+        repo.save_state(state)
+        return {"message": "File updated.", "state": state.model_dump(mode="json")}
+    return {"message": "File updated."}
+
+
+@app.delete("/api/skills/{skill_id}/files/{file_path:path}")
+async def delete_skill_file(skill_id: str, file_path: str) -> dict[str, object]:
+    """Delete a specific file within a skill directory (cannot delete SKILL.md)."""
+    from app.services.skill_runner import safe_slug
+    from app.core.config import SKILLS_DIR
+    skill_dir = SKILLS_DIR / safe_slug(skill_id)
+    if not skill_dir.exists():
+        raise HTTPException(status_code=404, detail=f"Skill '{skill_id}' not found.")
+    if file_path == "SKILL.md":
+        raise HTTPException(status_code=400, detail="SKILL.md は削除できません。スキル全体を削除してください。")
+    target = (skill_dir / file_path).resolve()
+    try:
+        target.relative_to(skill_dir.resolve())
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid file path.")
+    if not target.exists() or not target.is_file():
+        raise HTTPException(status_code=404, detail=f"File '{file_path}' not found.")
+    target.unlink()
+    # Remove empty parent directories up to (but not including) skill_dir
+    parent = target.parent
+    while parent != skill_dir.resolve() and parent.is_dir() and not any(parent.iterdir()):
+        parent.rmdir()
+        parent = parent.parent
+    return {"message": f"File '{file_path}' deleted."}
+
+
 # ── Handoff Orchestration endpoints ─────────────────────────
 
 

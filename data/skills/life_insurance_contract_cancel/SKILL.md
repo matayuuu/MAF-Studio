@@ -1,6 +1,6 @@
 ---
 name: life-insurance-contract-cancel
-description: Cancel an existing life insurance contract with coverage review suggestion.
+description: 既存の生命保険契約を解約する。解約前に代替プランの提案も行う。
 ---
 
 # life_insurance_contract_cancel

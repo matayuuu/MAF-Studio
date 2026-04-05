@@ -1,6 +1,6 @@
 ---
 name: life-insurance-quote
-description: Generate a formal life insurance quote adjusted for gender and health status.
+description: 性別・健康状態に応じた保険料を算出し、生命保険の正式見積もりを作成する。
 ---
 
 # life_insurance_quote
