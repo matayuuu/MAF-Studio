@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260405j" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260405r" />
   </head>
   <body>
     <!-- ========== Fixed sidebar nav ========== -->
@@ -166,7 +166,19 @@
                   <fieldset class="form-block">
                     <legend class="form-legend">Agent Skills</legend>
                     <p class="form-hint">Uploaded file-based skills with subprocess script execution</p>
-                    <div id="skill-checkboxes" class="skill-checks"></div>
+                    <div id="agent-skill-list" class="agent-skill-list"></div>
+                    <div class="agent-skill-add-row">
+                      <div class="skill-picker" id="skill-picker">
+                        <button type="button" class="skill-picker-trigger" id="skill-picker-trigger" disabled>
+                          <span id="skill-picker-label">Select skills...</span>
+                          <svg class="skill-picker-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+                        <div class="skill-picker-dropdown" id="skill-picker-dropdown">
+                          <div id="skill-picker-options" class="skill-picker-options"></div>
+                        </div>
+                      </div>
+                      <button id="agent-skill-add-btn" class="btn btn-sm" disabled>+ 追加</button>
+                    </div>
                   </fieldset>
 
                   <fieldset class="form-block">
@@ -802,6 +814,17 @@
     <!-- Toast notification -->
     <div id="toast" class="toast"></div>
 
-    <script src="/static/app.js?v=20260405j" defer></script>
+    <!-- CRM Detail Modal -->
+    <div id="crm-detail-modal" class="crm-modal-overlay">
+      <div class="crm-modal-card">
+        <div class="crm-modal-header">
+          <span id="crm-detail-title" class="crm-modal-title"></span>
+          <button id="crm-detail-close" class="crm-modal-close" aria-label="閉じる">✕</button>
+        </div>
+        <div id="crm-detail-body" class="crm-modal-body"></div>
+      </div>
+    </div>
+
+    <script src="/static/app.js?v=20260405r" defer></script>
   </body>
 </html>

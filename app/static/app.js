@@ -339,7 +339,7 @@ async function saveEditSkillFile() {
     if (data.state) {
       studio.state = data.state;
       populateSkillList();
-      populateSkillCheckboxes(studio.currentAgent?.skill_ids || []);
+      populateAgentSkillSection(studio.currentAgent?.skill_ids || []);
     }
     $("#skill-modal-content").textContent = content || "(empty)";
     cancelEditSkillFile();
@@ -376,7 +376,7 @@ async function confirmDeleteSkill() {
     const data = await res.json();
     studio.state = data.state;
     populateSkillList();
-    populateSkillCheckboxes(studio.currentAgent?.skill_ids || []);
+    populateAgentSkillSection(studio.currentAgent?.skill_ids || []);
     closeSkillModal();
   } catch (e) {
     alert(`削除失敗: ${e.message}`);
@@ -410,15 +410,65 @@ async function promptNewSkillFile() {
   }
 }
 
-function populateSkillCheckboxes(selected = []) {
-  const c = $("#skill-checkboxes");
-  c.innerHTML = "";
-  studio.state.skills.forEach((s) => {
-    const label = document.createElement("label");
-    label.className = "skill-check-item";
-    label.innerHTML = `<input type="checkbox" value="${s.id}" ${selected.includes(s.id) ? "checked" : ""} /><div><strong>${esc(s.name)}</strong><div class="meta">${esc(s.description || "No description")}</div></div>`;
-    c.appendChild(label);
+function populateAgentSkillSection(selected = []) {
+  // ── Added skill list ──
+  const list = $("#agent-skill-list");
+  list.innerHTML = "";
+  const validSelected = selected.filter((id) => studio.state.skills.find((s) => s.id === id));
+  if (validSelected.length) {
+    validSelected.forEach((id) => {
+      const skill = studio.state.skills.find((s) => s.id === id);
+      const item = document.createElement("div");
+      item.className = "agent-skill-item";
+      item.dataset.skillId = esc(id);
+      item.innerHTML = `
+        <div class="agent-skill-item-info">
+          <strong>${esc(skill.name)}</strong>
+          <div class="agent-skill-item-meta">${esc(skill.description || "説明なし")}</div>
+        </div>
+        <div class="agent-skill-item-actions">
+          <button class="agent-skill-remove-btn" title="削除" data-skill-id="${esc(id)}">✕</button>
+        </div>`;
+      list.appendChild(item);
+    });
+  } else {
+    list.innerHTML = `<div class="agent-skill-empty">スキルが追加されていません</div>`;
+  }
+
+  // ── Custom picker: un-added skills only ──
+  const unselected = studio.state.skills.filter((s) => !validSelected.includes(s.id));
+  const opts = $("#skill-picker-options");
+  const trigger = $("#skill-picker-trigger");
+  opts.innerHTML = unselected.length
+    ? unselected.map((s) => `
+        <label class="skill-picker-option">
+          <input type="checkbox" value="${esc(s.id)}" />
+          <div class="skill-picker-option-info">
+            <span class="skill-picker-option-name">${esc(s.name)}</span>
+            <span class="skill-picker-option-meta">${esc(s.description || "説明なし")}</span>
+          </div>
+        </label>`).join("")
+    : `<div class="skill-picker-empty">No skills available to add</div>`;
+  trigger.disabled = !unselected.length;
+  $("#agent-skill-add-btn").disabled = true; // reset until user checks something
+  // update label + add button when checkboxes change
+  opts.querySelectorAll("input[type=checkbox]").forEach((cb) => {
+    cb.addEventListener("change", _updateSkillPickerState);
   });
+  _updateSkillPickerState();
+}
+
+function _updateSkillPickerState() {
+  const checked = Array.from($$("#skill-picker-options input:checked"));
+  const label = $("#skill-picker-label");
+  const addBtn = $("#agent-skill-add-btn");
+  if (!label) return;
+  if (checked.length === 0) {
+    label.textContent = "Select skills...";
+  } else {
+    label.textContent = `${checked.length} selected`;
+  }
+  addBtn.disabled = checked.length === 0;
 }
 
 function populateScriptSelectors() {
@@ -494,7 +544,7 @@ function loadAgent(agent) {
   (agent.mcp_tools || []).forEach((t) => mc.appendChild(buildMcpRow(t)));
   if (!mc.children.length) mc.appendChild(buildMcpRow());
 
-  populateSkillCheckboxes(agent.skill_ids || []);
+  populateAgentSkillSection(agent.skill_ids || []);
   populateAgentList();
   updateAgentHeader(agent);
   updateToolsList(agent);
@@ -515,7 +565,7 @@ function updateAgentHeader(agent) {
 }
 
 function collectAgentForm() {
-  const skillIds = Array.from($$("#skill-checkboxes input:checked")).map((i) => i.value);
+  const skillIds = Array.from($$("#agent-skill-list .agent-skill-item")).map((el) => el.dataset.skillId);
   const mcpTools = Array.from($$("#mcp-container .mcp-row"))
     .map((r) => ({
       id: createId("mcp"),
@@ -1401,7 +1451,7 @@ function newAgent() {
   const mc = $("#mcp-container");
   mc.innerHTML = "";
   mc.appendChild(buildMcpRow());
-  populateSkillCheckboxes([]);
+  populateAgentSkillSection([]);
   populateAgentList();
   updateAgentHeader({ name: "New Agent", mcp_tools: [], skill_ids: [] });
   clearChat();
@@ -2699,14 +2749,19 @@ function renderSvCustomerInfo() {
   ];
 
   const contracts  = Array.isArray(ctx.contracts)  ? ctx.contracts  : [];
-  const activities = Array.isArray(ctx.activities) ? ctx.activities : [];
+  const activities = (Array.isArray(ctx.activities) ? [...ctx.activities] : [])
+    .sort((a, b) => {
+      const dateDiff = (b.activity_date || "").localeCompare(a.activity_date || "");
+      if (dateDiff !== 0) return dateDiff;
+      return (b.activity_id || "").localeCompare(a.activity_id || "");
+    });
 
   // ── Contract rows ──
   const contractRows = contracts.length
-    ? contracts.map((c) => {
+    ? contracts.map((c, i) => {
         const isActive = c.contract_status === "有効";
         const premium  = c.monthly_premium ? `¥${Number(c.monthly_premium).toLocaleString()}` : "—";
-        return `<tr>
+        return `<tr class="sv-crm-clickable" data-crm-type="contract" data-crm-idx="${i}" title="クリックで詳細表示">
           <td>${esc(c.contract_id    || "—")}</td>
           <td>${esc(c.product_name   || "—")}</td>
           <td class="sv-crm-td-num">${premium}</td>
@@ -2717,8 +2772,8 @@ function renderSvCustomerInfo() {
 
   // ── Activity rows ──
   const activityRows = activities.length
-    ? activities.map((a) => `
-        <div class="sv-crm-activity">
+    ? activities.map((a, i) => `
+        <div class="sv-crm-activity sv-crm-clickable" data-crm-type="activity" data-crm-idx="${i}" title="クリックで詳細表示">
           <div class="sv-crm-activity-meta">
             <span class="sv-crm-activity-date">${esc(a.activity_date || "")}</span>
             <span class="sv-crm-activity-type">${esc(a.activity_type || "")}</span>
@@ -2755,7 +2810,82 @@ function renderSvCustomerInfo() {
     </div>
   </div>`;
 
+  // クリックイベント（イベント委譲）
+  el.querySelectorAll(".sv-crm-clickable").forEach(row => {
+    row.addEventListener("click", () => {
+      const type = row.dataset.crmType;
+      const idx  = parseInt(row.dataset.crmIdx, 10);
+      if (type === "contract") showCrmDetailModal("contract", contracts[idx]);
+      if (type === "activity") showCrmDetailModal("activity", activities[idx]);
+    });
+  });
 }
+
+/* ── CRM Detail Modal ────────────────────────────────────── */
+function showCrmDetailModal(type, data) {
+  const modal = $("#crm-detail-modal");
+  const title = $("#crm-detail-title");
+  const body  = $("#crm-detail-body");
+  if (!modal || !data) return;
+
+  const CONTRACT_FIELDS = [
+    ["契約ID",        "contract_id"],
+    ["商品ID",        "product_id"],
+    ["商品名",        "product_name"],
+    ["契約日",        "contract_date"],
+    ["開始日",        "start_date"],
+    ["終了日",        "end_date"],
+    ["契約状態",      "contract_status"],
+    ["月額保険料",    "monthly_premium"],
+    ["保障額",        "coverage_amount"],
+    ["支払方法",      "payment_method"],
+    ["被保険者",      "insured_name"],
+    ["受取人",        "beneficiary_name"],
+    ["受取人続柄",    "beneficiary_relation"],
+    ["次回見直日",    "next_review_date"],
+    ["備考",          "notes"],
+  ];
+  const ACTIVITY_FIELDS = [
+    ["活動ID",        "activity_id"],
+    ["活動種別",      "activity_type"],
+    ["活動日",        "activity_date"],
+    ["担当者",        "agent_name"],
+    ["件名",          "subject"],
+    ["内容",          "content"],
+    ["結果",          "outcome"],
+    ["次のアクション","next_action"],
+    ["次回予定日",    "next_action_date"],
+  ];
+
+  const fields = type === "contract" ? CONTRACT_FIELDS : ACTIVITY_FIELDS;
+  title.textContent = type === "contract" ? "契約詳細" : "商談詳細";
+
+  body.innerHTML = fields.map(([label, key]) => {
+    let val = data[key];
+    if (val === undefined || val === null || val === "") val = null;
+    if (key === "monthly_premium" && val) val = `¥${Number(val).toLocaleString()}`;
+    if (key === "coverage_amount"  && val) val = `¥${Number(val).toLocaleString()}`;
+    return `<div class="crm-modal-row">
+      <span class="crm-modal-label">${label}</span>
+      <span class="crm-modal-value">${val !== null ? esc(String(val)) : '<span class="crm-modal-empty">—</span>'}</span>
+    </div>`;
+  }).join("");
+
+  modal.classList.add("crm-modal-open");
+}
+
+(function initCrmModal() {
+  document.addEventListener("click", e => {
+    const modal = $("#crm-detail-modal");
+    if (!modal) return;
+    if (e.target.id === "crm-detail-modal" || e.target.closest("#crm-detail-close")) {
+      modal.classList.remove("crm-modal-open");
+    }
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") $("#crm-detail-modal")?.classList.remove("crm-modal-open");
+  });
+})();
 
 /* ── Session message renderer ────────────────────────────── */
 function renderSvSessionMessages() {
@@ -2786,11 +2916,10 @@ function renderSvSessionMessages() {
 
       case "skill_result": {
         const content = m.content || "";
-        const snippet = content.slice(0, 300);
         return `<div class="sv-sess-row sv-sess-result sv-sess-skill-result">
           <details class="sv-sess-result-details">
             <summary class="sv-sess-result-summary">↳ 結果を表示</summary>
-            <pre class="sv-sess-result-pre">${esc(snippet)}${content.length > 300 ? "\n…" : ""}</pre>
+            <pre class="sv-sess-result-pre sv-sess-result-pre--full">${esc(content)}</pre>
           </details>
         </div>`;
       }
@@ -3415,6 +3544,39 @@ function bindEvents() {
 
   $("#new-agent-btn").addEventListener("click", newAgent);
   $("#add-mcp-btn").addEventListener("click", () => $("#mcp-container").appendChild(buildMcpRow()));
+
+  // Agent Skills: picker open/close
+  $("#skill-picker-trigger").addEventListener("click", (e) => {
+    e.stopPropagation();
+    $("#skill-picker").classList.toggle("open");
+  });
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("#skill-picker")) {
+      $("#skill-picker")?.classList.remove("open");
+    }
+  });
+
+  // Agent Skills: Add / Remove / Detail
+  $("#agent-skill-add-btn").addEventListener("click", () => {
+    const newIds = Array.from($$("#skill-picker-options input:checked")).map((cb) => cb.value);
+    if (!newIds.length) return;
+    $("#skill-picker").classList.remove("open");
+    const current = Array.from($$("#agent-skill-list .agent-skill-item")).map((el) => el.dataset.skillId);
+    const merged = [...current, ...newIds.filter((id) => !current.includes(id))];
+    populateAgentSkillSection(merged);
+    updateAgentHeader(collectAgentForm());
+  });
+  $("#agent-skill-list").addEventListener("click", (e) => {
+    const removeBtn = e.target.closest(".agent-skill-remove-btn");
+    if (removeBtn) {
+      const current = Array.from($$("#agent-skill-list .agent-skill-item")).map((el) => el.dataset.skillId);
+      populateAgentSkillSection(current.filter((id) => id !== removeBtn.dataset.skillId));
+      updateAgentHeader(collectAgentForm());
+      return;
+    }
+    const item = e.target.closest(".agent-skill-item");
+    if (item) openSkillModal(item.dataset.skillId);
+  });
   $("#save-agent-btn").addEventListener("click", saveAgent);
   $("#delete-agent-btn").addEventListener("click", deleteAgent);
   // Agent dropdown selector

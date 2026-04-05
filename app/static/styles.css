@@ -618,30 +618,116 @@ select { cursor: pointer; }
   margin-top: 4px;
 }
 
-/* ── Skill checklist on agent form ───────────────────────── */
-.skill-checks {
+/* ── Agent Skill list on agent form ─────────────────────── */
+.agent-skill-list {
   display: grid;
-  gap: 6px;
+  gap: 5px;
+  margin-bottom: 8px;
 }
-.skill-check-item {
+.agent-skill-item {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: space-between;
   gap: 10px;
   padding: 8px 10px;
   border-radius: var(--radius-sm);
   background: var(--surface-0);
   border: 1px solid var(--border);
   cursor: pointer;
-  transition: border-color 0.12s;
+  transition: border-color 0.12s, background 0.12s;
 }
-.skill-check-item:hover { border-color: var(--border-focus); }
-.skill-check-item input[type="checkbox"] {
-  width: 16px; height: 16px;
+.agent-skill-item:hover { border-color: var(--border-focus); background: var(--surface-hover); }
+.agent-skill-item-info { flex: 1; min-width: 0; }
+.agent-skill-item-info strong { font-size: 0.85rem; }
+.agent-skill-item-meta { font-size: 0.75rem; color: var(--text-tertiary); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.agent-skill-item-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.agent-skill-remove-btn {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 2px 5px;
+  border-radius: var(--radius-sm);
+  line-height: 1;
+  transition: color 0.1s, background 0.1s;
+}
+.agent-skill-remove-btn:hover { color: var(--danger); background: var(--danger-bg, rgba(239,68,68,0.1)); }
+.agent-skill-empty { font-size: 0.8rem; color: var(--text-tertiary); padding: 6px 2px; }
+.agent-skill-add-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* ── Skill picker (custom multi-select dropdown) ─────────── */
+.skill-picker {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.skill-picker-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.12s, background 0.12s;
+}
+.skill-picker-trigger:not(:disabled):hover { border-color: var(--border-focus); background: var(--surface-hover); }
+.skill-picker-trigger:disabled { opacity: 0.5; cursor: default; }
+.skill-picker-chevron { flex-shrink: 0; color: var(--text-tertiary); transition: transform 0.15s; }
+.skill-picker.open .skill-picker-chevron { transform: rotate(180deg); }
+#skill-picker-label { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.skill-picker-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  display: none;
+  overflow: hidden;
+}
+.skill-picker.open .skill-picker-dropdown { display: block; }
+.skill-picker-options {
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 4px;
+}
+.skill-picker-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px 9px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.skill-picker-option:hover { background: var(--surface-hover); }
+.skill-picker-option input[type="checkbox"] {
   margin-top: 2px;
+  width: 14px; height: 14px;
+  flex-shrink: 0;
   accent-color: var(--violet);
+  cursor: pointer;
 }
-.skill-check-item strong { font-size: 0.85rem; }
-.skill-check-item .meta { font-size: 0.75rem; color: var(--text-tertiary); }
+.skill-picker-option-info { display: flex; flex-direction: column; min-width: 0; }
+.skill-picker-option-name { font-size: 0.83rem; font-weight: 600; }
+.skill-picker-option-meta { font-size: 0.72rem; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.skill-picker-empty { padding: 10px 12px; font-size: 0.8rem; color: var(--text-tertiary); }
 
 /* ── MCP row ─────────────────────────────────────────────── */
 .mcp-stack { display: grid; gap: 10px; }
@@ -2045,6 +2131,18 @@ html:has(#page-handoffs.active) #app {
   box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.25), var(--shadow-md);
   background: linear-gradient(135deg, #0d2a1e, var(--surface-2));
 }
+body.light .ho-node-card.active {
+  background: linear-gradient(135deg, #d1fae5, #f0fdf4);
+  color: var(--text);
+}
+body.light .ho-node-card.active .ho-node-info strong {
+  color: #065f46;
+}
+body.light .ho-node-card.active .ho-node-avatar {
+  background: #d1fae5;
+  border-color: #34d399;
+  color: #065f46;
+}
 
 .ho-node-card.start {
   border-color: #5ea2ff;
@@ -2651,6 +2749,94 @@ html:has(#page-skillviz.active) #app {
   margin-top: 2px;
 }
 
+/* ── CRM clickable rows ──────────────────────────────────── */
+.sv-crm-clickable {
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.sv-crm-table .sv-crm-clickable:hover td {
+  background: var(--surface-hover);
+}
+.sv-crm-activities .sv-crm-clickable:hover {
+  background: var(--surface-hover);
+  border-radius: var(--radius-sm);
+}
+
+/* ── CRM Detail Modal ────────────────────────────────────── */
+.crm-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 5000;
+  align-items: center;
+  justify-content: center;
+}
+.crm-modal-overlay.crm-modal-open {
+  display: flex;
+}
+.crm-modal-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  width: min(480px, 90vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.crm-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.crm-modal-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.crm-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: background 0.12s, color 0.12s;
+}
+.crm-modal-close:hover { background: var(--surface-hover); color: var(--text); }
+.crm-modal-body {
+  overflow-y: auto;
+  padding: 12px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.crm-modal-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 8px;
+  font-size: 0.82rem;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+}
+.crm-modal-row:last-child { border-bottom: none; }
+.crm-modal-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.crm-modal-value {
+  color: var(--text);
+  word-break: break-word;
+}
+.crm-modal-empty { color: var(--text-tertiary); }
+
 /* ── Skill Context Management cell ───────────────────────── */
 .sv-context-cell {
   flex: 6;
@@ -3137,6 +3323,11 @@ details.sv-prompt-advertise[open] .sv-prompt-pre {
   margin: 0;
   line-height: 1.5;
   flex: 1;
+}
+.sv-sess-result-pre--full {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 .sv-sess-skill-result {
   border-left-color: rgba(52, 211, 153, 0.25);
