@@ -1,4 +1,4 @@
-# MAF Workflow Studio
+# MAF Studio
 
 **Microsoft Agent Framework 向けのローカル Web スタジオ**です。エージェントの設計からマルチエージェント実行・スキル動作の可視化まで、1 つの UI で完結します。
 
