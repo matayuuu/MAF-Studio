@@ -76,6 +76,8 @@ Skills タブでスキルをアップロードして管理します。
 
 Handoff 実行中の Agent Skills の動きをリアルタイムで可視化するダッシュボードです。
 
+![Skill Visualization Demo](demo.gif)
+
 - **Advertise**: 各 agent がターン開始時にどのスキルを提示したかを表示
 - **Load**: LLM が `load_skill` を呼び出しスキルの詳細を取得したタイミングを追跡
 - **Execute**: スキルスクリプトの実行とその結果を時系列で表示
