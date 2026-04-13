@@ -32,23 +32,5 @@
         "python.terminal.activateEnvironment": false
       }
     }
-  },
-
-  "secrets": {
-    "OPENAI_API_KEY": {
-      "description": "OpenAI API key (OpenAI Responses プロバイダーを使う場合)"
-    },
-    "AZURE_OPENAI_API_KEY": {
-      "description": "Azure OpenAI API key"
-    },
-    "AZURE_OPENAI_ENDPOINT": {
-      "description": "Azure OpenAI エンドポイント (例: https://YOUR-RESOURCE.openai.azure.com/openai/v1)"
-    },
-    "AZURE_OPENAI_API_VERSION": {
-      "description": "Azure OpenAI API バージョン (省略可)"
-    },
-    "AZURE_AI_PROJECT_ENDPOINT": {
-      "description": "Azure AI Foundry プロジェクトエンドポイント"
-    }
   }
 }
