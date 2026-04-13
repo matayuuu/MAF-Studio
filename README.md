@@ -20,7 +20,12 @@
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/matayuuu/MAF-Studio?quickstart=1)
 
 1. 上のバッジをクリックして Codespace を作成
-2. コンテナ起動後、依存関係は自動でインストールされます
+2. コンテナ起動後、ターミナルで依存関係をインストールします
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
 3. `.env.example` を `.env` にコピーして、使用するプロバイダーの値を設定します
 
    ```bash

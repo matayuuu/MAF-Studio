@@ -11,7 +11,7 @@ pip install --quiet -r requirements.txt
 if [ ! -f ".env" ]; then
   cp .env.example .env
   echo "→ .env.example を .env にコピーしました"
-  echo "  ※ Codespaces Secrets を設定していれば環境変数は自動で注入されます"
+  echo "  .env を編集して API キーなどの値を設定してください"
 else
   echo "→ .env は既に存在します (スキップ)"
 fi
