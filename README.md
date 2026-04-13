@@ -20,18 +20,16 @@
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/matayuuu/MAF-Studio?quickstart=1)
 
 1. 上のバッジをクリックして Codespace を作成
-2. コンテナ起動後、ターミナルで依存関係をインストールします
+2. コンテナ起動後、依存関係のインストールと `.env` ファイルの作成が自動で行われます
 
-   ```bash
-   python -m pip install -r requirements.txt
-   ```
+   > **自動セットアップが失敗した場合** は手動で実行してください:
+   >
+   > ```bash
+   > python -m pip install -r requirements.txt
+   > cp .env.example .env
+   > ```
 
-3. `.env.example` を `.env` にコピーして、使用するプロバイダーの値を設定します
-
-   ```bash
-   cp .env.example .env
-   # .env を編集して API キーなどを入力
-   ```
+3. `.env` を編集して、使用するプロバイダーの値を設定します
 
 4. Azure AI Foundry を使う場合はターミナルで認証します
 
@@ -49,13 +47,19 @@
 
 ### ローカル環境
 
-```powershell
+```bash
 cd <repo_dir>
 python -m venv .venv
-.venv\Scripts\python.exe -m pip install -r requirements.txt
-```
 
-`.env.example` を `.env` にコピーして、使用するプロバイダーの値を設定します。
+# Windows
+.venv\Scripts\activate
+# macOS / Linux
+source .venv/bin/activate
+
+pip install -r requirements.txt
+cp .env.example .env
+# .env を編集して API キーなどを入力
+```
 
 ---
 
@@ -73,9 +77,9 @@ python -m venv .venv
 
 ### ローカル環境
 
-```powershell
-cd <repo_dir>
-.venv\Scripts\python.exe -m uvicorn app.main:app --reload
+```bash
+# venv を有効化した状態で
+uvicorn app.main:app --reload
 ```
 
 ブラウザーで `http://127.0.0.1:8000` を開きます。

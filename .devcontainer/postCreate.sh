@@ -5,7 +5,7 @@ echo "=== MAF Studio: Codespaces セットアップ ==="
 
 # 依存関係のインストール
 echo "→ Python パッケージをインストール中..."
-python -m pip install --quiet -r requirements.txt
+python -m pip install -r requirements.txt
 
 # .env ファイルのセットアップ
 if [ ! -f ".env" ]; then
