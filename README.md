@@ -15,6 +15,27 @@
 
 ## 1. セットアップ
 
+### GitHub Codespaces（推奨）
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/matayuuu/MAF-Studio?quickstart=1)
+
+1. 上のバッジをクリックして Codespace を作成
+2. **Codespaces Secrets** に API キーを設定（リポジトリ設定 → Secrets and variables → Codespaces）
+
+   | Secret 名 | 説明 |
+   |---|---|
+   | `AZURE_OPENAI_API_KEY` | Azure OpenAI API キー |
+   | `AZURE_OPENAI_ENDPOINT` | Azure OpenAI エンドポイント |
+   | `AZURE_AI_PROJECT_ENDPOINT` | Azure AI Foundry プロジェクトエンドポイント |
+   | `OPENAI_API_KEY` | OpenAI API キー（OpenAI 直接利用時） |
+
+3. コンテナ起動後、依存関係は自動でインストールされます
+4. **「Start MAF Studio」タスクを実行**してサーバーを起動（ポート 8000 が自動でブラウザに開かれます）
+
+> **Note**: Azure AI Foundry を使う場合はターミナルで `az login` を実行してください。
+
+### ローカル環境
+
 ```powershell
 cd <repo_dir>
 python -m venv .venv
@@ -26,6 +47,18 @@ python -m venv .venv
 ---
 
 ## 2. 起動
+
+### Codespaces
+
+`Ctrl+Shift+P` → **Tasks: Run Task** から以下を選択します。
+
+| タスク | 説明 |
+|---|---|
+| **Start MAF Studio** | MAF Studio をポート 8000 で起動 |
+| **Start Demo CRM App** | デモ用 CRM アプリをポート 8001 で起動 |
+| **Start All Servers** | 両サーバーを並列起動 |
+
+### ローカル環境
 
 ```powershell
 cd <repo_dir>
