@@ -23,7 +23,7 @@
 2. コンテナ起動後、ターミナルで依存関係をインストールします
 
    ```bash
-   pip install -r requirements.txt
+   python -m pip install -r requirements.txt
    ```
 
 3. `.env.example` を `.env` にコピーして、使用するプロバイダーの値を設定します
