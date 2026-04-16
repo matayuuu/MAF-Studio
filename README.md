@@ -1,25 +1,67 @@
 # MAF Studio
 
-**Microsoft Agent Framework 向けのローカル Web スタジオ**です。エージェントの設計からマルチエージェント実行・スキル動作の可視化まで、1 つの UI で完結します。
+**Microsoft Agent Framework (MAF) の機能をブラウザーから手軽に試せるローカル Web スタジオ**です。  
+Agent Skills を持つエージェントを作成し、Handoffs Orchestration を用いてマルチエージェントシステムとして UI から構築できます。また、スキルがエージェントのコンテキストをどのように拡充しているかをリアルタイムで把握できる可視化機能も備えています。
 
-### 主な機能
-
-| タブ | 概要 |
+| タブ | できること |
 |---|---|
-| **Agents** | model / instructions / Hosted MCP tools / Agent Skills を設定・保存 |
-| **Skills** | SKILL.md ベースのスキルをアップロードし、スクリプトをローカルで直接実行 |
-| **Handoffs** | 参加 agent・ハンドオフルールを定義し、エージェントメッシュをグラフで確認・チャットでテスト |
-| **Skill Visualization** | Handoff 実行中の skills の advertise / load / execute をリアルタイムで可視化 |
+| **Agents** | モデル・指示・Hosted MCP tools・Agent Skills を設定して保存、チャットテストの実施 |
+| **Skills** | SKILL.md ベースのスキルの作成と編集、スクリプトをローカルで直接実行 |
+| **Handoffs** | 参加エージェント・ハンドオフルールを定義し、グラフ確認とチャットテストを実施 |
+| **Skill Visualization** | Handoff 実行中のスキルの advertise / load / Read resorces & Run scripts をリアルタイムで可視化 |
+
+
+![GIF](assets/demo.gif)
 
 ---
 
-## 1. セットアップ
+## 1. Agent Skills とは
 
-### GitHub Codespaces（推奨）
+**[Agent Skills](https://learn.microsoft.com/en-us/agent-framework/agents/skills?pivots=programming-language-python)** は、エージェントに特定の業務能力を追加するための「再利用可能な知識・手順・ツールのパッケージ仕様」です。
+
+スキルはフォルダ単位で定義します：
+
+```
+skill-name/
+├── SKILL.md          ← 必須: スキル本体（YAML フロントマター ＋ マークダウン本文）
+├── scripts/          ← 任意: 実行可能なコード
+├── references/       ← 任意: 参照ドキュメント
+└── assets/           ← 任意: テンプレート・画像等
+```
+
+- 最小構成は `SKILL.md` のみ
+- 必要なときにだけ読み込むため、コンテキストを効率よく使える
+- 業務知識・判断ルール・ツール呼び出し手順をパッケージとして再利用できる
+
+---
+
+## 2. Handoffs Orchestration とは
+
+**[Handoffs Orchestration](https://learn.microsoft.com/en-us/agent-framework/workflows/orchestrations/handoff?pivots=programming-language-python)** は、ユーザーのリクエスト内容に応じて適切な専門エージェントへ会話を動的に引き継ぐ（Handoff）仕組みです。  
+各エージェントは Agent Skills を通じて業務知識を持ち、問い合わせに応じて最適なエージェントが処理を担当します。
+
+
+
+**特徴：**
+- 専門領域ごとのエージェント分担
+- 会話内容に基づく動的なルーティング
+- Skills を活用した業務知識の再利用
+
+---
+
+## 3. セットアップ＆起動
+
+環境に合わせて手順を選んでください。
+
+---
+
+### ▶ GitHub Codespaces（推奨）
+
+インストール不要でブラウザーからすぐ始められます。
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/matayuuu/MAF-Studio?quickstart=1)
 
-1. 上のバッジをクリックして Codespace を作成
+1. 上のバッジをクリックして Codespace を作成します
 2. コンテナ起動後、依存関係のインストールと `.env` ファイルの作成が自動で行われます
 
    > **自動セットアップが失敗した場合** は手動で実行してください:
@@ -29,56 +71,60 @@
    > cp .env.example .env
    > ```
 
-3. `.env` を編集して、使用するプロバイダーの値を設定します
+3. `.env` を編集して、使用するモデルプロバイダーの値を設定します（→ [モデル接続](#モデル接続) 参照）
 
-4. Azure AI Foundry を使う場合はターミナルで認証します
+4. Azure OpenAI / Azure AI Foundry を使う場合はターミナルで認証します
 
    ```bash
    az login --use-device-code
    ```
 
-5. サーバーを起動します
+5. `Ctrl+Shift+P` → **Tasks: Run Task** からサーバーを起動します
 
-   ```
-   Ctrl+Shift+P  →  Tasks: Run Task  →  Start MAF Studio
-   ```
+   | タスク | 説明 |
+   |---|---|
+   | **Start MAF Studio** | MAF Studio をポート 8000 で起動 |
+   | **Start Demo CRM App** | デモ用 CRM アプリをポート 8001 で起動 |
+   | **Start All Servers** | 両サーバーを並列起動 |
 
    ポート 8000 が自動的にブラウザに転送されて開きます。
 
-### ローカル環境
+---
+
+### ▶ ローカル環境
+
+Python 3.10+ と Git がインストール済みであることを確認してください。
+
+**① 仮想環境を作成して有効化**
 
 ```bash
-cd <repo_dir>
+cd MAF-Studio
 python -m venv .venv
 
 # Windows
 .venv\Scripts\activate
 # macOS / Linux
 source .venv/bin/activate
-
-pip install -r requirements.txt
-cp .env.example .env
-# .env を編集して API キーなどを入力
 ```
 
----
-
-## 2. 起動
-
-### Codespaces
-
-`Ctrl+Shift+P` → **Tasks: Run Task** から以下を選択します。
-
-| タスク | 説明 |
-|---|---|
-| **Start MAF Studio** | MAF Studio をポート 8000 で起動 |
-| **Start Demo CRM App** | デモ用 CRM アプリをポート 8001 で起動 |
-| **Start All Servers** | 両サーバーを並列起動 |
-
-### ローカル環境
+**② 依存関係をインストールして `.env` を作成**
 
 ```bash
-# venv を有効化した状態で
+pip install -r requirements.txt
+cp .env.example .env
+```
+
+`.env` を編集して、使用するモデルプロバイダーの値を設定します（→ [モデル接続](#モデル接続) 参照）
+
+**③ Azure OpenAI / Azure AI Foundry を使う場合は認証**
+
+```bash
+az login --use-device-code
+```
+
+**④ サーバーを起動**
+
+```bash
 uvicorn app.main:app --reload
 ```
 
@@ -86,55 +132,37 @@ uvicorn app.main:app --reload
 
 ---
 
-## 3. モデル接続
+### モデル接続
 
-モデルを設定しなくてもモック実行で UI のテストが可能です。
+> モデルを設定しなくてもモック実行で UI のテストが可能です。
+
+`.env` に必要な値を設定してください。
 
 | プロバイダー | 必要な環境変数 |
 |---|---|
 | OpenAI Responses | `OPENAI_API_KEY` |
-| Azure OpenAI | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT` |
-| Azure AI Foundry | `AZURE_AI_PROJECT_ENDPOINT` + `az login` または `DefaultAzureCredential` |
+| Azure OpenAI | `AZURE_OPENAI_API_KEY`、`AZURE_OPENAI_ENDPOINT` |
+| Azure AI Foundry | `AZURE_AI_PROJECT_ENDPOINT`（認証は `az login` または `DefaultAzureCredential`） |
 
 ---
 
-## 4. Agent Skills の取り込み
+## 4. デモシナリオを試す
 
-Skills タブでスキルをアップロードして管理します。
-
-- **フォルダ upload**: `SKILL.md` / `references/` / `scripts/` を含むスキルフォルダをそのまま登録
-- **ファイル upload**: ファイル群をまとめて 1 つのスキルとして登録
-- **スクリプト実行**: 右ペインの **Run selected skill script** から JSON 引数付きでローカル実行し、結果を確認
-
-サンプルとして `data/skills/unit-converter` を同梱しています。
+MAF Studio には、すぐに試せる **Contoso 保険コンタクトセンター** シナリオが同梱されています。  
+プリインストールエージェント・ハンドオフ設定・具体的な試し方は **[docs/DEMO.md](docs/DEMO.md)** をご覧ください。
 
 ---
 
-## 5. Handoff Orchestration
+## ご利用にあたって
 
-`HandoffBuilder` を使ったマルチエージェント会話セッションを設計・実行します。
+> **注意**: スキルスクリプトはサーバーを実行しているマシン上でローカル実行されます。本リポジトリはデモ・プロトタイプ用途を想定しており、本番環境への直接利用は推奨しません。
 
-1. **Handoffs** タブで開始 agent・参加 agent・ハンドオフルールを定義して保存
-2. エージェントのルーティングをグラフで確認
-3. チャット UI から会話を開始し、エージェント間のハンドオフと各 agent の応答をリアルタイムで確認
+## ライセンス
 
-各 agent には Agent Skills と Hosted MCP tools を割り当て可能。agent 間で共有されるコンテキスト（`customer_context` など）はセッションを通じて保持されます。
-
----
-
-## 6. Skill Visualization
-
-Handoff 実行中の Agent Skills の動きをリアルタイムで可視化するダッシュボードです。
-
-![Skill Visualization Demo](demo.gif)
-
-- **Advertise**: 各 agent がターン開始時にどのスキルを提示したかを表示
-- **Load**: LLM が `load_skill` を呼び出しスキルの詳細を取得したタイミングを追跡
-- **Execute**: スキルスクリプトの実行とその結果を時系列で表示
-- ハンドオフの流れをオーケストレーショングラフと合わせて確認
-
----
+[MIT License](LICENSE)
 
 ## 参考リンク
 
-- [Agent skills](https://learn.microsoft.com/ja-jp/agent-framework/agents/skills?pivots=programming-language-python)
+- [Agent Skills — Microsoft Learn](https://learn.microsoft.com/ja-jp/agent-framework/agents/skills?pivots=programming-language-python)
+- [Handoff Orchestration — Microsoft Learn](https://learn.microsoft.com/ja-jp/agent-framework/workflows/orchestrations/handoff?pivots=programming-language-python)
+
